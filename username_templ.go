@@ -8,26 +8,27 @@ package main
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import (
-	"net/http"
-)
+import "net/http"
 
 var name string = "John Doe"
 
 func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		http.Redirect(w, r, "/username-error", http.StatusSeeOther)
+		w.WriteHeader(http.StatusBadRequest)
+		page("Edit Username", usernameEdit(name, "Wrong Method. Need POST.")).Render(r.Context(), w)
 		return
 
 	}
 	if err := r.ParseForm(); err != nil {
-		http.Redirect(w, r, "/username-error", http.StatusSeeOther)
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		page("Edit Username", usernameEdit(name, "Form did not give data.")).Render(r.Context(), w)
 		return
 	}
 
 	newName := r.FormValue("username")
 	if newName == "" {
-		http.Redirect(w, r, "/username-error", http.StatusSeeOther)
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		page("Edit Username", usernameEdit("", "Name is required.")).Render(r.Context(), w)
 		return
 	}
 
@@ -69,7 +70,7 @@ func handleUsernameEditError(w http.ResponseWriter, r *http.Request) {
 	page("Edit Username failed", usernameChangeError()).Render(r.Context(), w)
 }
 
-func usernameEdit() templ.Component {
+func usernameEdit(value string, err string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -97,13 +98,36 @@ func usernameEdit() templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 42, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 43, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"> <button type=\"submit\">Update</button></form><a href=\"/\">Cancel</a>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" required> <button type=\"submit\">Update</button></form>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if err != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<p role=\"alert\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(err)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 47, Col: 23}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</p>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<a href=\"/\">Cancel</a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -112,7 +136,7 @@ func usernameEdit() templ.Component {
 }
 
 func handleUsernameEdit(w http.ResponseWriter, r *http.Request) {
-	page("Edit Username", usernameEdit()).Render(r.Context(), w)
+	page("Edit Username", usernameEdit(name, "")).Render(r.Context(), w)
 }
 
 func userNameEditLink() templ.Component {
@@ -131,25 +155,25 @@ func userNameEditLink() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var4 == nil {
-			templ_7745c5c3_Var4 = templ.NopComponent
+		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var5 == nil {
+			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div><span>Username: ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div><span>Username: ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(name)
+		var templ_7745c5c3_Var6 string
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 55, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 58, Col: 24}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</span> <a href=\"/username\">[Edit]</a></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</span> <a href=\"/username\">[Edit]</a></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
