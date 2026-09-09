@@ -8,6 +8,11 @@ templ page(title string, content templ.Component) {
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<meta name="color-scheme" content="dark light"/>
 			<title>{ title }</title>
+			<style>
+                @view-transition {
+                    navigation: auto;
+                }
+            </style>
 		</head>
 		<body style="width: 60ch; margin: 0 auto;">
 			@content
