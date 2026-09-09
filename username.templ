@@ -11,15 +11,15 @@ func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
 	// check if the request method is POST
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
-			http.Error(w, "could not parse form", http.StatusBadRequest)
 			log.Printf("parse form: %v", err)
-			return
+			http.Redirect(w, r, "/username-error", http.StatusBadRequest)
 		}
 		newName := r.FormValue("username")
-		log.Printf("method=%s content-type=%s form=%v username=%q", r.Method, r.Header.Get("Content-Type"), r.Form, newName)
 		if newName != "" {
 			name = newName
 			// persist to a file in the future or DB
+		} else {
+			http.Redirect(w, r, "/username-error", http.StatusLengthRequired)
 		}
 		
 		http.Redirect(w, r, "/username", http.StatusSeeOther)
@@ -28,14 +28,16 @@ func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
- 
-templ usernameChangeSuccess() {
-	<p>yeah!</p>
+templ usernameChangeError() {
+	<p>nope!</p>
 }
 
-func handleUsernameEdit(w http.ResponseWriter, r *http.Request) {
-	page("Edit Username", usernameEdit()).Render(r.Context(), w)
+func handleUsernameEditError(w http.ResponseWriter, r *http.Request) {
+	page("Edit Username failed", usernameChangeError()).Render(r.Context(), w)
 }
+
+ 
+
 
 templ usernameEdit() {
 	<h1>Change Name</h1>
@@ -43,4 +45,7 @@ templ usernameEdit() {
 		<label for="username">Name</label>
 		<input name="username" id="username" type="text" value={ name }/>
 	</form>
+}
+func handleUsernameEdit(w http.ResponseWriter, r *http.Request) {
+	page("Edit Username", usernameEdit()).Render(r.Context(), w)
 }

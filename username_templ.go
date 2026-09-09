@@ -19,15 +19,15 @@ func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
 	// check if the request method is POST
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
-			http.Error(w, "could not parse form", http.StatusBadRequest)
 			log.Printf("parse form: %v", err)
-			return
+			http.Redirect(w, r, "/username-error", http.StatusBadRequest)
 		}
 		newName := r.FormValue("username")
-		log.Printf("method=%s content-type=%s form=%v username=%q", r.Method, r.Header.Get("Content-Type"), r.Form, newName)
 		if newName != "" {
 			name = newName
 			// persist to a file in the future or DB
+		} else {
+			http.Redirect(w, r, "/username-error", http.StatusLengthRequired)
 		}
 
 		http.Redirect(w, r, "/username", http.StatusSeeOther)
@@ -36,7 +36,7 @@ func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func usernameChangeSuccess() templ.Component {
+func usernameChangeError() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -57,7 +57,7 @@ func usernameChangeSuccess() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<p>yeah!</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<p>nope!</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -65,8 +65,8 @@ func usernameChangeSuccess() templ.Component {
 	})
 }
 
-func handleUsernameEdit(w http.ResponseWriter, r *http.Request) {
-	page("Edit Username", usernameEdit()).Render(r.Context(), w)
+func handleUsernameEditError(w http.ResponseWriter, r *http.Request) {
+	page("Edit Username failed", usernameChangeError()).Render(r.Context(), w)
 }
 
 func usernameEdit() templ.Component {
@@ -97,7 +97,7 @@ func usernameEdit() templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 44, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 46, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {
@@ -109,6 +109,10 @@ func usernameEdit() templ.Component {
 		}
 		return nil
 	})
+}
+
+func handleUsernameEdit(w http.ResponseWriter, r *http.Request) {
+	page("Edit Username", usernameEdit()).Render(r.Context(), w)
 }
 
 var _ = templruntime.GeneratedTemplate
