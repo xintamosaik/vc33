@@ -1,6 +1,6 @@
 package main
 
-import( "net/http")
+import "net/http"
 
 templ home() {
 	<h1>Home</h1>
@@ -14,5 +14,3 @@ templ home() {
 func handleHome(w http.ResponseWriter, r *http.Request) {
 	page("Home", home()).Render(r.Context(), w)
 }
-
- 

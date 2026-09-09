@@ -1,7 +1,9 @@
 package main 
 
-import ("net/http"
-"log")
+import (
+	"log"
+	"net/http"
+)
 
 var name string = "John Doe"
 
@@ -24,15 +26,11 @@ func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
 		log.Println("no")
 	}
 }
- 
 
- 
-
- 
 templ usernameChangeSuccess() {
 	<p>yeah!</p>
 }
- 
+
 func handleUsernameEdit(w http.ResponseWriter, r *http.Request) {
 	page("Edit Username", usernameEdit()).Render(r.Context(), w)
 }
@@ -41,6 +39,6 @@ templ usernameEdit() {
 	<h1>Change Name</h1>
 	<form action="/username" method="post">
 		<label for="username">Name</label>
-		<input name="username" id="username" type="text" value={ name } />
+		<input name="username" id="username" type="text" value={ name }/>
 	</form>
 }

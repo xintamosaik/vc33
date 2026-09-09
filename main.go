@@ -2,18 +2,14 @@ package main
 
 import (
 	"fmt"
- 
-	 
+
 	"net/http"
 )
-
- 
 
 func main() {
 
 	http.HandleFunc("/", handleHome)
- 
-	 
+
 	http.HandleFunc("GET /username", handleUsernameEdit)
 	http.HandleFunc("POST /username", handleRequestUpdateUserName)
 
