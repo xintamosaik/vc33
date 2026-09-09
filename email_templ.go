@@ -38,7 +38,7 @@ func handleRequestUpdateEmail(w http.ResponseWriter, r *http.Request) {
 	newEmail := strings.TrimSpace(r.FormValue("email"))
 	if !validEmail(newEmail) {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		page("Edit Email", emailEdit("", "email is required.")).Render(r.Context(), w)
+		page("Edit Email", emailEdit(newEmail, "email is required.")).Render(r.Context(), w)
 		return
 	}
 

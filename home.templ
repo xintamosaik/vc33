@@ -4,18 +4,19 @@ import "net/http"
 
 templ home() {
 	<h1>Home</h1>
-	<nav>
+    <main>
 		@userNameEditLink()
         @professionEditLink()
         @linkedinEditLink()
-        <p>github/gitlab</p>
+      
         @emailEditLink()
+          <p>github/gitlab</p>
         <p>address</p>
         <p>jobs</p>
         <p>education</p>
         <p>skills</p>
         <p>projects</p>
-	</nav>
+	</main>
 }
 
 func handleHome(w http.ResponseWriter, r *http.Request) {
