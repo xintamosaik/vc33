@@ -28,7 +28,7 @@ func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err := writeString(filename, newName)
+	err := writeString(filename, newName)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		page("Edit Username", usernameEdit("", "The app crashed. Sorry")).Render(r.Context(), w)
