@@ -1,0 +1,99 @@
+package main 
+
+import (
+	"log"
+	"net/http"
+	"encoding/json"
+)
+
+type GitProfile struct {
+    Provider string
+    URL      string
+}
+
+var gitProfile GitProfile
+
+func handleRequestUpdateGit(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		page("Edit Git", gitEdit(gitProfile, "Could not read the form.")).Render(r.Context(), w)
+		return
+	}
+
+		next := GitProfile{
+		Provider: r.FormValue("provider"),
+		URL:      r.FormValue("url"),
+	}
+	if next.Provider == "" || next.URL == "" {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		page("Edit Git", gitEdit(next, "Provider and URL are required.")).Render(r.Context(), w)
+		return
+	}
+	data, err := json.Marshal(next)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Edit Git", gitEdit(next, "Could not encode the data.")).Render(r.Context(), w)
+		return
+	}
+	err = writeString("git.json", string(data))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Edit Git", gitEdit(next, "Could not save the git.")).Render(r.Context(), w)
+		return
+	}
+
+	gitProfile = next
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+ 
+templ gitEdit(value GitProfile, err string) {
+	<h1>Change git?</h1>
+	<form action="/git" method="post">
+		<label for="provider">Provider</label>
+		<select name="provider" id="provider" required>
+			<option value="">Choose one</option>
+			<option value="github" selected?={ value.Provider == "github" }>GitHub</option>
+			<option value="gitlab" selected?={ value.Provider == "gitlab" }>GitLab</option>
+			<option value="codeberg" selected?={ value.Provider == "codeberg" }>Codeberg</option>
+			<option value="other" selected?={ value.Provider == "other" }>Other</option>
+		</select>
+
+		<label for="url">Profile URL</label>
+		<input
+			name="url"
+			id="url"
+			type="url"
+			value={ value.URL }
+			required
+		/>
+		<button type="submit">Update</button>
+	</form>
+	if err != "" {
+		<p role="alert">{ err }</p>
+	}
+	<a href="/">Cancel</a>
+}
+
+func handleGitEdit(w http.ResponseWriter, r *http.Request) {
+	page("Edit Git", gitEdit(gitProfile, "")).Render(r.Context(), w)
+}
+
+templ gitEditLink() {
+	<div>
+		<span>Git: { gitProfile.Provider } - { gitProfile.URL}</span>
+		<a href="/git">[Edit]</a>
+	</div>
+}
+
+func init() {
+	saved, err := readString("git.json")
+	if err == nil {
+		if err := json.Unmarshal([]byte(saved), &gitProfile); err != nil {
+			log.Println("There were errors reading git data.")
+		}
+	}
+
+	http.HandleFunc("GET /git", handleGitEdit)
+	http.HandleFunc("POST /git", handleRequestUpdateGit)
+}
