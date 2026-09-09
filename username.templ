@@ -37,10 +37,13 @@ func handleUsernameEditError(w http.ResponseWriter, r *http.Request) {
 }
 
 templ usernameEdit() {
-	<h1>Change Name</h1>
-	<form action="/username" method="post">
-		<label for="username">Name</label>
+ 	<form action="/username" method="post">
+		<br />
+		<label for="username">Change Name?</label>
+		<br />
 		<input name="username" id="username" type="text" value={ name }/>
+		<br>
+		<button type="submit">Update</button>
 	</form>
 }
 
