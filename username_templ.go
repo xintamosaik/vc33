@@ -15,25 +15,25 @@ import (
 var name string = "John Doe"
 
 func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
-	// check if the request method is POST
-	if r.Method == http.MethodPost {
-		if err := r.ParseForm(); err != nil {
-			http.Redirect(w, r, "/username-error", http.StatusSeeOther)
-			return
-		}
-		newName := r.FormValue("username")
-		if newName != "" {
-			name = newName
-			// persist to a file in the future or DB
-		} else {
-			http.Redirect(w, r, "/username-error", http.StatusSeeOther)
-			return
-		}
-
-		http.Redirect(w, r, "/username?status=updated", http.StatusSeeOther)
-	} else {
+	if r.Method != http.MethodPost {
 		http.Redirect(w, r, "/username-error", http.StatusSeeOther)
+		return
+
 	}
+	if err := r.ParseForm(); err != nil {
+		http.Redirect(w, r, "/username-error", http.StatusSeeOther)
+		return
+	}
+
+	newName := r.FormValue("username")
+	if newName == "" {
+		http.Redirect(w, r, "/username-error", http.StatusSeeOther)
+		return
+	}
+
+	name = newName
+	// persist to a file in the future or DB
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 func usernameChangeError() templ.Component {
@@ -103,7 +103,7 @@ func usernameEdit() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"> <button type=\"submit\">Update</button></form>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"> <button type=\"submit\">Update</button></form><a href=\"/\">Cancel</a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -113,6 +113,12 @@ func usernameEdit() templ.Component {
 
 func handleUsernameEdit(w http.ResponseWriter, r *http.Request) {
 	page("Edit Username", usernameEdit()).Render(r.Context(), w)
+}
+
+func init() {
+	http.HandleFunc("GET /username", handleUsernameEdit)
+	http.HandleFunc("/username-error", handleUsernameEditError)
+	http.HandleFunc("POST /username", handleRequestUpdateUserName)
 }
 
 var _ = templruntime.GeneratedTemplate
