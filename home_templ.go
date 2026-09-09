@@ -43,7 +43,11 @@ func home() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<p>linkedin</p><p>github/gitlab</p><p>email</p><p>address</p><p>jobs</p><p>education</p><p>skills</p><p>projects</p></nav>")
+		templ_7745c5c3_Err = linkedinEditLink().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<p>github/gitlab</p><p>email</p><p>address</p><p>jobs</p><p>education</p><p>skills</p><p>projects</p></nav>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
