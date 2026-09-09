@@ -9,7 +9,6 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"log"
 	"net/http"
 )
 
@@ -19,20 +18,21 @@ func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
 	// check if the request method is POST
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
-			log.Printf("parse form: %v", err)
-			http.Redirect(w, r, "/username-error", http.StatusBadRequest)
+			http.Redirect(w, r, "/username-error", http.StatusSeeOther)
+			return
 		}
 		newName := r.FormValue("username")
 		if newName != "" {
 			name = newName
 			// persist to a file in the future or DB
 		} else {
-			http.Redirect(w, r, "/username-error", http.StatusLengthRequired)
+			http.Redirect(w, r, "/username-error", http.StatusSeeOther)
+			return
 		}
 
 		http.Redirect(w, r, "/username", http.StatusSeeOther)
 	} else {
-		log.Println("no")
+		http.Redirect(w, r, "/username-error", http.StatusSeeOther)
 	}
 }
 
@@ -97,7 +97,7 @@ func usernameEdit() templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 46, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 43, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {

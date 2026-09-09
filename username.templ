@@ -1,7 +1,6 @@
 package main 
 
 import (
-	"log"
 	"net/http"
 )
 
@@ -11,20 +10,21 @@ func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
 	// check if the request method is POST
 	if r.Method == http.MethodPost {
 		if err := r.ParseForm(); err != nil {
-			log.Printf("parse form: %v", err)
-			http.Redirect(w, r, "/username-error", http.StatusBadRequest)
+			http.Redirect(w, r, "/username-error", http.StatusSeeOther)
+			return
 		}
 		newName := r.FormValue("username")
 		if newName != "" {
 			name = newName
 			// persist to a file in the future or DB
 		} else {
-			http.Redirect(w, r, "/username-error", http.StatusLengthRequired)
+			http.Redirect(w, r, "/username-error", http.StatusSeeOther)
+			return
 		}
-		
+
 		http.Redirect(w, r, "/username", http.StatusSeeOther)
 	} else {
-		log.Println("no")
+		http.Redirect(w, r, "/username-error", http.StatusSeeOther)
 	}
 }
 
@@ -36,9 +36,6 @@ func handleUsernameEditError(w http.ResponseWriter, r *http.Request) {
 	page("Edit Username failed", usernameChangeError()).Render(r.Context(), w)
 }
 
- 
-
-
 templ usernameEdit() {
 	<h1>Change Name</h1>
 	<form action="/username" method="post">
@@ -46,6 +43,7 @@ templ usernameEdit() {
 		<input name="username" id="username" type="text" value={ name }/>
 	</form>
 }
+
 func handleUsernameEdit(w http.ResponseWriter, r *http.Request) {
 	page("Edit Username", usernameEdit()).Render(r.Context(), w)
 }
