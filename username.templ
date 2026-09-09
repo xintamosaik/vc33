@@ -1,0 +1,46 @@
+package main 
+
+import ("net/http"
+"log")
+
+var name string = "John Doe"
+
+func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
+	// check if the request method is POST
+	if r.Method == http.MethodPost {
+		if err := r.ParseForm(); err != nil {
+			http.Error(w, "could not parse form", http.StatusBadRequest)
+			log.Printf("parse form: %v", err)
+			return
+		}
+		newName := r.FormValue("username")
+		log.Printf("method=%s content-type=%s form=%v username=%q", r.Method, r.Header.Get("Content-Type"), r.Form, newName)
+		if newName != "" {
+			name = newName
+			// persist to a file in the future or DB
+		}
+		page("Success", usernameChangeSuccess()).Render(r.Context(), w)
+	} else {
+		log.Println("no")
+	}
+}
+ 
+
+ 
+
+ 
+templ usernameChangeSuccess() {
+	<p>yeah!</p>
+}
+ 
+func handleUsernameEdit(w http.ResponseWriter, r *http.Request) {
+	page("Edit Username", usernameEdit()).Render(r.Context(), w)
+}
+
+templ usernameEdit() {
+	<h1>Change Name</h1>
+	<form action="/username" method="post">
+		<label for="username">Name</label>
+		<input name="username" id="username" type="text" value={ name } />
+	</form>
+}
