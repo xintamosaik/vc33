@@ -5,12 +5,14 @@ import "net/http"
 templ home() {
 	<h1>Home</h1>
 	<nav>
-		<a href="/hello">Hello</a>
-		<a href="/new">New</a>
-		<a href="/username">Edit</a>
+		@userNameEditLink()
 	</nav>
 }
 
 func handleHome(w http.ResponseWriter, r *http.Request) {
 	page("Home", home()).Render(r.Context(), w)
+}
+
+func init() {
+    http.HandleFunc("/", handleHome)
 }

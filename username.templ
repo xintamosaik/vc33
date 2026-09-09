@@ -49,6 +49,14 @@ func handleUsernameEdit(w http.ResponseWriter, r *http.Request) {
 	page("Edit Username", usernameEdit()).Render(r.Context(), w)
 }
 
+templ userNameEditLink(){
+	<div>
+		
+		<span>Username: { name }</span>
+		<a href="/username">[Edit]</a>
+	</div>
+}
+
 func init() {
 	http.HandleFunc("GET /username", handleUsernameEdit)
 	http.HandleFunc("/username-error", handleUsernameEditError)

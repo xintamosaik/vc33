@@ -31,7 +31,15 @@ func home() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<h1>Home</h1><nav><a href=\"/hello\">Hello</a> <a href=\"/new\">New</a> <a href=\"/username\">Edit</a></nav>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<h1>Home</h1><nav>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = userNameEditLink().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</nav>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -41,6 +49,10 @@ func home() templ.Component {
 
 func handleHome(w http.ResponseWriter, r *http.Request) {
 	page("Home", home()).Render(r.Context(), w)
+}
+
+func init() {
+	http.HandleFunc("/", handleHome)
 }
 
 var _ = templruntime.GeneratedTemplate
