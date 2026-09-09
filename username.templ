@@ -2,7 +2,9 @@ package main
 
 import "net/http"
 
-var name string = "John Doe"
+var name string = ""
+
+const filename = "username.txt"
 
 func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -26,6 +28,7 @@ func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
 
 	name = newName
 	// persist to a file in the future or DB
+	writeString(filename, newName)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -61,6 +64,11 @@ templ userNameEditLink() {
 }
 
 func init() {
+	saved, err := readString(filename)
+	if err == nil {
+		name = saved
+	}
+
 	http.HandleFunc("GET /username", handleUsernameEdit)
 	http.HandleFunc("/username-error", handleUsernameEditError)
 	http.HandleFunc("POST /username", handleRequestUpdateUserName)

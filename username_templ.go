@@ -10,7 +10,9 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "net/http"
 
-var name string = "John Doe"
+var name string = ""
+
+const filename = "username.txt"
 
 func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -34,6 +36,7 @@ func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
 
 	name = newName
 	// persist to a file in the future or DB
+	writeString(filename, newName)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
@@ -98,7 +101,7 @@ func usernameEdit(value string, err string) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 43, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 46, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {
@@ -116,7 +119,7 @@ func usernameEdit(value string, err string) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(err)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 47, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 50, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -167,7 +170,7 @@ func userNameEditLink() templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 58, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 61, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -182,6 +185,11 @@ func userNameEditLink() templ.Component {
 }
 
 func init() {
+	saved, err := readString(filename)
+	if err == nil {
+		name = saved
+	}
+
 	http.HandleFunc("GET /username", handleUsernameEdit)
 	http.HandleFunc("/username-error", handleUsernameEditError)
 	http.HandleFunc("POST /username", handleRequestUpdateUserName)
