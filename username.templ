@@ -36,7 +36,7 @@ templ usernameEdit(value string, err string) {
 	<h1>Change Name?</h1>
 	<form action="/username" method="post">
 		<label for="username">Name</label>
-		<input name="username" id="username" type="text" value={ name } required/>
+		<input name="username" id="username" type="text" value={ value } required/>
 		<button type="submit">Update</button>
 	</form>
 	if err != "" {
