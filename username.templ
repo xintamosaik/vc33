@@ -7,15 +7,9 @@ var name string = ""
 const filename = "username.txt"
 
 func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusBadRequest)
-		page("Edit Username", usernameEdit(name, "Wrong Method. Need POST.")).Render(r.Context(), w)
-		return
-
-	}
 	if err := r.ParseForm(); err != nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		page("Edit Username", usernameEdit(name, "Form did not give data.")).Render(r.Context(), w)
+		w.WriteHeader(http.StatusBadRequest)
+		page("Edit Username", usernameEdit(name, "Could not read the form.")).Render(r.Context(), w)
 		return
 	}
 
@@ -26,23 +20,22 @@ func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, err :=writeString(filename, newName)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Edit Username", usernameEdit("", "The app crashed. Sorry")).Render(r.Context(), w)
+		return
+	}
+
 	name = newName
-	// persist to a file in the future or DB
-	writeString(filename, newName)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-templ usernameChangeError() {
-	<p>nope!</p>
-}
-
-func handleUsernameEditError(w http.ResponseWriter, r *http.Request) {
-	page("Edit Username failed", usernameChangeError()).Render(r.Context(), w)
-}
-
+ 
 templ usernameEdit(value string, err string) {
+	<h1>Change Name?</h1>
 	<form action="/username" method="post">
-		<label for="username"><h1>Change Name?</h1></label>
+		<label for="username">Name</label>
 		<input name="username" id="username" type="text" value={ name } required/>
 		<button type="submit">Update</button>
 	</form>
@@ -70,6 +63,5 @@ func init() {
 	}
 
 	http.HandleFunc("GET /username", handleUsernameEdit)
-	http.HandleFunc("/username-error", handleUsernameEditError)
 	http.HandleFunc("POST /username", handleRequestUpdateUserName)
 }
