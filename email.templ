@@ -1,0 +1,80 @@
+package main 
+
+import (
+	"net/http"
+    "net/mail"
+    "strings"
+)
+
+var email string = ""
+func validEmail(value string) bool {
+
+    value = strings.TrimSpace(value)
+
+    address, err := mail.ParseAddress(value)
+    if err != nil {
+        return false
+    }
+
+    return address.Address == value
+}
+
+func handleRequestUpdateEmail(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		page("Edit Email", emailEdit(email, "Could not read the form.")).Render(r.Context(), w)
+		return
+	}
+
+	newEmail := strings.TrimSpace(r.FormValue("email"))
+	if !validEmail(newEmail) {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		page("Edit Email", emailEdit("", "email is required.")).Render(r.Context(), w)
+		return
+	}
+
+	err :=writeString("email.txt", newEmail)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Edit Email", emailEdit("", "Could not save the email.")).Render(r.Context(), w)
+		return
+	}
+
+	email = newEmail
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+ 
+templ emailEdit(value string, err string) {
+	<h1>Change email?</h1>
+	<form action="/email" method="post">
+		<label for="email">email</label>
+		<input name="email" id="email" type="email" value={ value } required/>
+		<button type="submit">Update</button>
+	</form>
+	if err != "" {
+		<p role="alert">{ err }</p>
+	}
+	<a href="/">Cancel</a>
+}
+
+func handleEmailEdit(w http.ResponseWriter, r *http.Request) {
+	page("Edit Email", emailEdit(email, "")).Render(r.Context(), w)
+}
+
+templ emailEditLink() {
+	<div>
+		<span>Email: { email }</span>
+		<a href="/email">[Edit]</a>
+	</div>
+}
+
+func init() {
+	saved, err := readString("email.txt")
+	if err == nil {
+		email = saved
+	}
+
+	http.HandleFunc("GET /email", handleEmailEdit)
+	http.HandleFunc("POST /email", handleRequestUpdateEmail)
+}
