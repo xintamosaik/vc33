@@ -23,5 +23,5 @@ func handleHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func init() {
-    http.HandleFunc("/", handleHome)
+    http.HandleFunc("GET /{$}", handleHome)
 }
