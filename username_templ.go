@@ -29,7 +29,8 @@ func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
 			name = newName
 			// persist to a file in the future or DB
 		}
-		page("Success", usernameChangeSuccess()).Render(r.Context(), w)
+
+		http.Redirect(w, r, "/username", http.StatusSeeOther)
 	} else {
 		log.Println("no")
 	}
@@ -96,7 +97,7 @@ func usernameEdit() templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 42, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 44, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {

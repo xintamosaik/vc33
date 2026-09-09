@@ -21,12 +21,14 @@ func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
 			name = newName
 			// persist to a file in the future or DB
 		}
-		page("Success", usernameChangeSuccess()).Render(r.Context(), w)
+		
+		http.Redirect(w, r, "/username", http.StatusSeeOther)
 	} else {
 		log.Println("no")
 	}
 }
 
+ 
 templ usernameChangeSuccess() {
 	<p>yeah!</p>
 }
