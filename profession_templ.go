@@ -10,36 +10,34 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "net/http"
 
-var name string = ""
+var profession string = ""
 
-const filename = "username.txt"
-
-func handleRequestUpdateUserName(w http.ResponseWriter, r *http.Request) {
+func handleRequestUpdateProfession(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		page("Edit Username", usernameEdit(name, "Could not read the form.")).Render(r.Context(), w)
+		page("Edit Profession", professionEdit(profession, "Could not read the form.")).Render(r.Context(), w)
 		return
 	}
 
-	newName := r.FormValue("username")
-	if newName == "" {
+	newprofession := r.FormValue("profession")
+	if newprofession == "" {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		page("Edit Username", usernameEdit("", "Name is required.")).Render(r.Context(), w)
+		page("Edit Profession", professionEdit("", "profession is required.")).Render(r.Context(), w)
 		return
 	}
 
-	err := writeString(filename, newName)
+	err := writeString("profession.txt", newprofession)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		page("Edit Username", usernameEdit("", "Could not save the name.")).Render(r.Context(), w)
+		page("Edit Profession", professionEdit("", "Could not save the profession.")).Render(r.Context(), w)
 		return
 	}
 
-	name = newName
+	profession = newprofession
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func usernameEdit(value string, err string) templ.Component {
+func professionEdit(value string, err string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -60,14 +58,14 @@ func usernameEdit(value string, err string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<h1>Change Name?</h1><form action=\"/username\" method=\"post\"><label for=\"username\">Name</label> <input name=\"username\" id=\"username\" type=\"text\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<h1>Change profession?</h1><form action=\"/profession\" method=\"post\"><label for=\"profession\">profession</label> <input name=\"profession\" id=\"profession\" type=\"text\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(value)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 39, Col: 64}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `profession.templ`, Line: 37, Col: 68}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
@@ -85,7 +83,7 @@ func usernameEdit(value string, err string) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(err)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 43, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `profession.templ`, Line: 41, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -104,11 +102,11 @@ func usernameEdit(value string, err string) templ.Component {
 	})
 }
 
-func handleUsernameEdit(w http.ResponseWriter, r *http.Request) {
-	page("Edit Username", usernameEdit(name, "")).Render(r.Context(), w)
+func handleProfessionEdit(w http.ResponseWriter, r *http.Request) {
+	page("Edit Profession", professionEdit(profession, "")).Render(r.Context(), w)
 }
 
-func userNameEditLink() templ.Component {
+func professionEditLink() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -129,20 +127,20 @@ func userNameEditLink() templ.Component {
 			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div><span>Username: ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div><span>Profession: ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(name)
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(profession)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `username.templ`, Line: 54, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `profession.templ`, Line: 52, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</span> <a href=\"/username\">[Edit]</a></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</span> <a href=\"/profession\">[Edit]</a></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -151,13 +149,13 @@ func userNameEditLink() templ.Component {
 }
 
 func init() {
-	saved, err := readString(filename)
+	saved, err := readString("profession.txt")
 	if err == nil {
-		name = saved
+		profession = saved
 	}
 
-	http.HandleFunc("GET /username", handleUsernameEdit)
-	http.HandleFunc("POST /username", handleRequestUpdateUserName)
+	http.HandleFunc("GET /profession", handleProfessionEdit)
+	http.HandleFunc("POST /profession", handleRequestUpdateProfession)
 }
 
 var _ = templruntime.GeneratedTemplate

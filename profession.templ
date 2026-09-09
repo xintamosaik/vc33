@@ -1,0 +1,65 @@
+package main 
+
+import "net/http"
+
+var profession string = ""
+
+func handleRequestUpdateProfession(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		page("Edit Profession", professionEdit(profession, "Could not read the form.")).Render(r.Context(), w)
+		return
+	}
+
+	newprofession := r.FormValue("profession")
+	if newprofession == "" {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		page("Edit Profession", professionEdit("", "profession is required.")).Render(r.Context(), w)
+		return
+	}
+
+	err :=writeString("profession.txt", newprofession)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Edit Profession", professionEdit("", "Could not save the profession.")).Render(r.Context(), w)
+		return
+	}
+
+	profession = newprofession
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+ 
+templ professionEdit(value string, err string) {
+	<h1>Change profession?</h1>
+	<form action="/profession" method="post">
+		<label for="profession">profession</label>
+		<input name="profession" id="profession" type="text" value={ value } required/>
+		<button type="submit">Update</button>
+	</form>
+	if err != "" {
+		<p role="alert">{ err }</p>
+	}
+	<a href="/">Cancel</a>
+}
+
+func handleProfessionEdit(w http.ResponseWriter, r *http.Request) {
+	page("Edit Profession", professionEdit(profession, "")).Render(r.Context(), w)
+}
+
+templ professionEditLink() {
+	<div>
+		<span>Profession: { profession }</span>
+		<a href="/profession">[Edit]</a>
+	</div>
+}
+
+func init() {
+	saved, err := readString("profession.txt")
+	if err == nil {
+		profession = saved
+	}
+
+	http.HandleFunc("GET /profession", handleProfessionEdit)
+	http.HandleFunc("POST /profession", handleRequestUpdateProfession)
+}
