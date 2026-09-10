@@ -1,0 +1,183 @@
+package main 
+
+import (
+	"encoding/json"
+	"errors"
+	"log"
+	"net/http"
+	"strconv"
+	"strings"
+)
+
+type Job struct {
+	ID       int       `json:"id"`
+	Company  string    `json:"company"`
+	Location string    `json:"location"`
+	Title    string    `json:"title"`
+	Start    MonthDate `json:"start"`
+	End      MonthDate `json:"end,omitempty"`
+	Current  bool      `json:"current"`
+}
+
+var job Job
+
+type Month int
+type Year int
+
+type MonthDate struct {
+	Month Month `json:"month"`
+	Year  Year  `json:"year"`
+}
+
+func (d MonthDate) Before(other MonthDate) bool {
+	if d.Year != other.Year {
+		return d.Year < other.Year
+	}
+
+	return d.Month < other.Month
+}
+
+func parseMonth(value string) (Month, error) {
+	n, err := strconv.Atoi(value)
+	if err != nil {
+		return 0, errors.New("month must be a number")
+	}
+
+	if n < 1 || n > 12 {
+		return 0, errors.New("month must be between 1 and 12")
+	}
+
+	return Month(n), nil
+}
+
+func parseYear(value string) (Year, error) {
+	n, err := strconv.Atoi(value)
+	if err != nil {
+		return 0, errors.New("year must be a number")
+	}
+
+	if n < 1900 || n > 2100 {
+		return 0, errors.New("invalid year")
+	}
+
+	return Year(n), nil
+}
+
+func parseMonthDate(monthValue, yearValue string) (MonthDate, error) {
+	month, err := parseMonth(monthValue)
+	if err != nil {
+		return MonthDate{}, err
+	}
+
+	year, err := parseYear(yearValue)
+	if err != nil {
+		return MonthDate{}, err
+	}
+
+	return MonthDate{
+		Month: month,
+		Year:  year,
+	}, nil
+}
+
+func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		page("Edit Job", jobEdit(job, "Could not read the form.")).Render(r.Context(), w)
+		return
+	}
+
+	next := Job{
+		ID:       -1,
+		Company:  strings.TrimSpace(r.FormValue("company")),
+		Title:    strings.TrimSpace(r.FormValue("title")),
+		Location: strings.TrimSpace(r.FormValue("location")),
+
+		Current: r.FormValue("current") != "",
+	}
+
+	start, err := parseMonthDate(
+		r.FormValue("startMonth"),
+		r.FormValue("startYear"),
+	)
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		page("Edit Job", jobEdit(next, err.Error())).Render(r.Context(), w)
+		return
+	}
+
+	next.Start = start
+
+	id := r.FormValue("id")
+	if id != "" {
+		ID, err := strconv.Atoi(id)
+		if err != nil {
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			page("Edit Job", jobEdit(next, "Invalid job ID.")).Render(r.Context(), w)
+			return
+		}
+		next.ID = ID
+	}
+
+	endYear := r.FormValue("endYear")
+	current := r.FormValue("current")
+
+	data, err := json.Marshal(next)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Edit Job", jobEdit(next, "Could not encode the data.")).Render(r.Context(), w)
+		return
+	}
+	err = writeString("job.json", string(data))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Edit Job", jobEdit(next, "Could not save the job.")).Render(r.Context(), w)
+		return
+	}
+
+	job = next
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+templ jobEdit(value Job, err string) {
+	<h1>Change job?</h1>
+	<form action="/job" method="post">
+	 
+		<label for="url">Profile URL</label>
+		<input
+			name="url"
+			id="url"
+			type="url"
+			value={ value.Company }
+			required
+		/>
+		<button type="submit">Update</button>
+	</form>
+	if err != "" {
+		<p role="alert">{ err }</p>
+	}
+	<a href="/">Cancel</a>
+}
+
+func handleJobEdit(w http.ResponseWriter, r *http.Request) {
+	page("Edit Job", jobEdit(job, "")).Render(r.Context(), w)
+}
+
+templ jobEditLink() {
+	<div>
+		<span>Job: { job.Company } - { job.Title }</span>
+		<a href="/job">[Edit]</a>
+	</div>
+}
+
+func init() {
+	saved, err := readString("job.json")
+	if err == nil {
+		if err := json.Unmarshal([]byte(saved), &job); err != nil {
+			log.Println("There were errors reading job data.")
+		}
+	}
+
+	http.HandleFunc("GET /job", handleJobEdit)
+	http.HandleFunc("POST /job", handleRequestUpdateJob)
+}
