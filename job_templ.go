@@ -24,7 +24,7 @@ type Job struct {
 	Location string    `json:"location"`
 	Title    string    `json:"title"`
 	Start    MonthDate `json:"start"`
-	End      MonthDate `json:"end,omitempty"`
+	End      MonthDate `json:"end,omitzero"`
 	Current  bool      `json:"current"`
 }
 
@@ -65,7 +65,7 @@ func parseYear(value string) (Year, error) {
 		return 0, errors.New("year must be a number")
 	}
 
-	if n < 1900 || n > 2100 {
+	if n < 1900 || n > thisYear() {
 		return 0, errors.New("invalid year")
 	}
 
@@ -184,7 +184,7 @@ func valueOrEmptyString(number int) string {
 	if number == 0 {
 		return ""
 	}
-	return strconv.Itoa(int(number))
+	return strconv.Itoa(number)
 }
 
 func jobEdit(value Job, err string) templ.Component {
