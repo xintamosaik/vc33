@@ -170,6 +170,7 @@ func handleRequestUpdateCV(w http.ResponseWriter, r *http.Request) {
 
 templ cvName(name string) {
 	<label for="name">Name</label>
+    <br />
 	<input
 		name="name"
 		id="name"
@@ -180,12 +181,13 @@ templ cvName(name string) {
 
 templ cvSummary(summary string) {
 	<label for="summary">Summary</label>
-	<input
+    <br />
+	<textarea
 		name="summary"
 		id="summary"
-		value={ summary }
+		
 		required
-	/>
+	>{ summary }</textarea>
 }
 
 templ cvNav() {
@@ -212,7 +214,66 @@ templ cvAdd(value CV, err string) {
 	if err != "" {
 		<p role="alert">{ err }</p>
 	}
-	@cvBack()
+}
+
+templ cvJobRow(cv CV, job Job) {
+	<div>
+		<span>{ job.Company } - { job.Title }</span>
+		<a
+			href={ "/cv/" +
+			strconv.Itoa(cv.ID) +
+			"/job/" +
+			strconv.Itoa(job.ID) }
+		>
+			[Edit]
+		</a>
+	</div>
+}
+
+templ cvJobList(cv CV) {
+	for _, job := range jobs {
+		@cvJobRow(cv, job)
+	}
+}
+
+templ cvEducationRow(cv CV, education Education) {
+	<div>
+		<span>{ education.Degree } - { education.Institution }</span>
+		<a
+			href={ "/cv/" +
+			strconv.Itoa(cv.ID) +
+			"/education/" +
+			strconv.Itoa(education.ID) }
+		>
+			[Edit]
+		</a>
+	</div>
+}
+
+templ cvEducationList(cv CV) {
+	for _, education := range educations {
+		@cvEducationRow(cv, education)
+	}
+}
+
+templ cvSkillsRow(cv CV, skillCategory SkillCategory) {
+	<div>
+		<span>{ skillCategory.Name }</span>
+		<a
+			href={ "/cv/" +
+			strconv.Itoa(cv.ID) +
+			"/skills/" +
+			strconv.Itoa(skillCategory.ID) }
+		>
+			[Edit]
+		</a>
+	</div>
+}
+
+templ cvSkillsList(cv CV) {
+	for _, skillCategory := range skillCategories {
+		@cvSkillsRow(cv, skillCategory)
+	}
 }
 
 templ cvEdit(value CV, err string) {
@@ -225,10 +286,15 @@ templ cvEdit(value CV, err string) {
 		<br/>
 		<button type="submit">Update</button>
 	</form>
+	<h2>Jobs</h2>
+	@cvJobList(value)
+	<h2>Education</h2>
+	@cvEducationList(value)
+	<h2>Skills</h2>
+	@cvSkillsList(value)
 	if err != "" {
 		<p role="alert">{ err }</p>
 	}
-	@cvBack()
 }
 
 func handleCVEdit(w http.ResponseWriter, r *http.Request) {
