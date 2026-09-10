@@ -10,6 +10,32 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import "net/http"
 
+type CVJob struct {
+	JobID   int      `json:"jobId"`
+	Bullets []string `json:"bullets"`
+}
+
+type CVEducation struct {
+	EducationID int      `json:"educationId"`
+	Bullets     []string `json:"bullets"`
+}
+
+type CVSkillCategory struct {
+	SkillCategoryID int      `json:"skillCategoryId"`
+	Bullets         []string `json:"bullets"`
+}
+
+type CV struct {
+	ID      int    `json:"id"`
+	Name    string `json:"name"`
+	Summary string `json:"summary"`
+
+	Jobs       []CVJob       `json:"jobs"`
+	Educations []CVEducation `json:"educations"`
+
+	Skills []CVSkillCategory `json:"skills"`
+}
+
 func cv() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
