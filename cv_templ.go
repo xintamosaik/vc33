@@ -542,7 +542,7 @@ func cvEducationRow(cv CV, education Education) templ.Component {
 		var templ_7745c5c3_Var17 templ.SafeURL
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinURLErrs("/cv/" +
 			strconv.Itoa(cv.ID) +
-			"/job/" +
+			"/education/" +
 			strconv.Itoa(education.ID))
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 246, Col: 29}
@@ -631,7 +631,7 @@ func cvSkillsRow(cv CV, skillCategory SkillCategory) templ.Component {
 		var templ_7745c5c3_Var21 templ.SafeURL
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinURLErrs("/cv/" +
 			strconv.Itoa(cv.ID) +
-			"/job/" +
+			"/skills/" +
 			strconv.Itoa(skillCategory.ID))
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 266, Col: 33}
