@@ -342,6 +342,7 @@ func handleJobEdit(w http.ResponseWriter, r *http.Request) {
 func handleJobAdd(w http.ResponseWriter, r *http.Request) {
 	page("Add Job", jobEdit(Job{}, "")).Render(r.Context(), w)
 }
+
 templ JobAddLink() {
 	<a href="/job">[Add]</a>
 }
