@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+    "time"
 	"log"
 	"net/http"
 	"strconv"
@@ -168,10 +169,23 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 	job = next
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
-
+func thisYear() int {
+	return time.Now().Year()
+}
+func valueOrEmptyString(number int) string {
+	if number == 0 {
+		return ""
+	}
+	return strconv.Itoa(int(number))
+}
 templ jobEdit(value Job, err string) {
 	<h1>Change job?</h1>
 	<form action="/job" method="post">
+		<input
+			type="hidden"
+			name="id"
+			value={ strconv.Itoa(value.ID) }
+		/>
 		<label for="company">Company</label>
 		<input
 			name="company"
@@ -179,6 +193,7 @@ templ jobEdit(value Job, err string) {
 			value={ value.Company }
 			required
 		/>
+		<br/>
 		<label for="title">Title</label>
 		<input
 			name="title"
@@ -186,12 +201,14 @@ templ jobEdit(value Job, err string) {
 			value={ value.Title }
 			required
 		/>
+        	<br/>
 		<label for="location">Location</label>
 		<input
 			name="location"
 			id="location"
 			value={ value.Location }
 		/>
+        <br/>
 		<label for="startMonth">Start month</label>
 		<input
 			name="startMonth"
@@ -199,8 +216,10 @@ templ jobEdit(value Job, err string) {
 			type="number"
 			min="1"
 			max="12"
+			value={ strconv.Itoa(int(value.Start.Month)) }
 			required
 		/>
+        <br/>
 		<label for="startYear">Start year</label>
 		<input
 			name="startYear"
@@ -208,8 +227,10 @@ templ jobEdit(value Job, err string) {
 			type="number"
 			min="1900"
 			max="2100"
+			value={ strconv.Itoa(int(value.Start.Year)) }
 			required
 		/>
+        <br/>
 		<label>
 			<input
 				type="checkbox"
@@ -218,6 +239,27 @@ templ jobEdit(value Job, err string) {
 			/>
 			Current job
 		</label>
+        <br/>
+        <label for="endMonth">End month</label>
+        <input
+			name="endMonth"
+			id="endMonth"
+			type="number"
+			min="0"
+			max="12"
+			value={ valueOrEmptyString(int(value.End.Month)) }
+		/>
+        <br/>
+		<label for="endYear">End year</label>
+		<input
+			name="endYear"
+			id="endYear"
+			type="number"
+			min="0"
+			max={ thisYear() }
+			value={ valueOrEmptyString(int(value.End.Year)) }
+		/>
+        <br/>
 		<button type="submit">Update</button>
 	</form>
 	if err != "" {
@@ -230,13 +272,14 @@ func handleJobEdit(w http.ResponseWriter, r *http.Request) {
 	page("Edit Job", jobEdit(job, "")).Render(r.Context(), w)
 }
 
-templ JobAddLink(){
-    <a href="/job">[Add]</a>
+templ JobAddLink() {
+	<a href="/job">[Add]</a>
 }
+
 templ jobEditLink() {
 	<div>
 		<span>Job: { job.Company } - { job.Title }</span>
-		<a href={"/job/" + strconv.Itoa(job.ID)}>[Edit]</a>
+		<a href={ "/job/" + strconv.Itoa(job.ID) }>[Edit]</a>
 	</div>
 }
 

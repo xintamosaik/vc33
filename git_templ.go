@@ -115,7 +115,7 @@ func gitEdit(value GitProfile, err string) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, ">Other</option></select> <label for=\"url\">Profile URL</label> <input name=\"url\" id=\"url\" type=\"url\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, ">Other</option></select><br><label for=\"url\">Profile URL</label> <input name=\"url\" id=\"url\" type=\"url\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

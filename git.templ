@@ -58,7 +58,7 @@ templ gitEdit(value GitProfile, err string) {
 			<option value="codeberg" selected?={ value.Provider == "codeberg" }>Codeberg</option>
 			<option value="other" selected?={ value.Provider == "other" }>Other</option>
 		</select>
-
+		<br />
 		<label for="url">Profile URL</label>
 		<input
 			name="url"
