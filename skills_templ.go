@@ -19,7 +19,7 @@ import (
 type SkillCategory struct {
 	ID     int      `json:"id"`
 	Name   string   `json:"name"`
-	Skills []string `json:"skillCategories"`
+	Skills []string `json:"skills"`
 }
 
 func parseSkills(value string) []string {
