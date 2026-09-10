@@ -1,0 +1,220 @@
+package main
+
+import (
+	"encoding/json"
+	"log"
+	"net/http"
+	"strconv"
+	"strings"
+)
+
+type SkillCategory struct {
+	ID              int      `json:"id"`
+	Name            string   `json:"name"`
+	Skills []string `json:"skillCategories"`
+}
+
+func parseSkills(value string) []string {
+	var skills []string
+	seen := map[string]bool{}
+
+	for _, line := range strings.Split(value, "\n") {
+		skill := strings.TrimSpace(line)
+
+		if skill == "" || seen[skill] {
+			continue
+		}
+
+		seen[skill] = true
+		skills = append(skills, skill)
+	}
+
+	return skills
+}
+
+var skillCategories []SkillCategory
+
+ 
+func nextSkillCategoryID() int {
+	maxID := 0
+
+	for _, skillCategory := range skillCategories {
+		if skillCategory.ID > maxID {
+			maxID = skillCategory.ID
+		}
+	}
+
+	return maxID + 1
+}
+func findSkillCategory(id int) (SkillCategory, bool) {
+	for _, skillCategory := range skillCategories {
+		if skillCategory.ID == id {
+			return skillCategory, true
+		}
+	}
+
+	return SkillCategory{}, false
+}
+
+func handleRequestUpdateSkillCategory(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		page("Edit SkillCategory", skillCategoryEdit(SkillCategory{}, "Could not read the form.")).Render(r.Context(), w)
+		return
+	}
+
+	next := SkillCategory{
+		Name: strings.TrimSpace(r.FormValue("name")),
+		Skills: parseSkills(strings.TrimSpace(r.FormValue("skills"))),
+	 
+	}
+
+	// ID can be empty, we would need to deal with empty IDs (new entries)
+	id := r.FormValue("id")
+	if id != "" {
+		ID, err := strconv.Atoi(id)
+		if err != nil {
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			page("Edit SkillCategory", skillCategoryEdit(next, "Invalid skillCategory ID.")).Render(r.Context(), w)
+			return
+		}
+		next.ID = ID
+	}
+
+	// Name needs to be filled. Even if the browser checks, we check again
+
+	if next.Name == "" {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		page("Edit SkillCategory", skillCategoryEdit(next, "Name is required.")).Render(r.Context(), w)
+		return
+	}
+
+   
+	nextSkillCategories := append([]SkillCategory(nil), skillCategories...)
+
+	if next.ID == 0 {
+		next.ID = nextSkillCategoryID()
+		nextSkillCategories = append(nextSkillCategories, next)
+	} else {
+		found := false
+
+		for i := range nextSkillCategories {
+			if nextSkillCategories[i].ID == next.ID {
+				nextSkillCategories[i] = next
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			w.WriteHeader(http.StatusNotFound)
+			page("Edit SkillCategory", skillCategoryEdit(next, "SkillCategory not found.")).Render(r.Context(), w)
+			return
+		}
+	}
+
+	data, err := json.Marshal(nextSkillCategories)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Edit SkillCategory", skillCategoryEdit(next, "Could not encode the data.")).Render(r.Context(), w)
+		return
+	}
+
+	err = writeString("skillCategories.json", string(data))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Edit SkillCategory", skillCategoryEdit(next, "Could not save the skillCategories.")).Render(r.Context(), w)
+		return
+	}
+
+	skillCategories = nextSkillCategories
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+templ skillCategoryEdit(value SkillCategory, err string) {
+	<h1>Change skillCategory?</h1>
+	<form action="/skillCategory" method="post">
+		if value.ID != 0 {
+			<input
+				type="hidden"
+				name="id"
+				value={ strconv.Itoa(value.ID) }
+			/>
+		}
+		<label for="name">Name</label>
+		<input
+			name="name"
+			id="name"
+			value={ value.Name }
+			required
+		/>
+		<br/>
+		<label for="skills">Skills</label>
+		<textarea
+			name="skills"
+			id="skills"
+	 
+			required
+		>{ strings.Join(value.Skills, "\n") }</textarea>
+	 
+		 
+		<br/>
+		 
+		<button type="submit">Update</button>
+	</form>
+	if err != "" {
+		<p role="alert">{ err }</p>
+	}
+	<a href="/">Cancel</a>
+}
+
+func handleSkillCategoryEdit(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	skillCategory, found := findSkillCategory(id)
+	if !found {
+		http.NotFound(w, r)
+		return
+	}
+
+	page("Edit SkillCategory", skillCategoryEdit(skillCategory, "")).Render(r.Context(), w)
+}
+
+func handleSkillCategoryAdd(w http.ResponseWriter, r *http.Request) {
+	page("Add SkillCategory", skillCategoryEdit(SkillCategory{}, "")).Render(r.Context(), w)
+}
+
+templ SkillCategoryAddLink() {
+	<a href="/skillCategory">[Add]</a>
+}
+
+templ skillCategoryList() {
+	for _, skillCategory := range skillCategories {
+		@skillCategoryEditLink(skillCategory)
+	}
+}
+
+templ skillCategoryEditLink(skillCategory SkillCategory) {
+	<div>
+		<span>{ skillCategory.Name } - { strings.Join(skillCategory.Skills, "|") }</span>
+		<a href={ "/skillCategory/" + strconv.Itoa(skillCategory.ID) }>[Edit]</a>
+	</div>
+}
+
+func init() {
+	saved, err := readString("skillCategories.json")
+	if err == nil {
+		if err := json.Unmarshal([]byte(saved), &skillCategories); err != nil {
+			log.Println("There were errors reading skillCategories data.")
+		}
+	}
+
+	http.HandleFunc("GET /skillCategory", handleSkillCategoryAdd)
+	http.HandleFunc("GET /skillCategory/{id}", handleSkillCategoryEdit)
+	http.HandleFunc("POST /skillCategory", handleRequestUpdateSkillCategory)
+}
