@@ -2,14 +2,13 @@ package main
 
 import (
 	"encoding/json"
-
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-type Job struct {
+type Education struct {
 	ID       int       `json:"id"`
 	Company  string    `json:"company"`
 	Location string    `json:"location"`
@@ -19,37 +18,37 @@ type Job struct {
 	Current  bool      `json:"current"`
 }
 
-var jobs []Job
+var educations []Education
 
-func nextJobID() int {
+func nextEducationID() int {
 	maxID := 0
 
-	for _, job := range jobs {
-		if job.ID > maxID {
-			maxID = job.ID
+	for _, education := range educations {
+		if education.ID > maxID {
+			maxID = education.ID
 		}
 	}
 
 	return maxID + 1
 }
-func findJob(id int) (Job, bool) {
-	for _, job := range jobs {
-		if job.ID == id {
-			return job, true
+func findEducation(id int) (Education, bool) {
+	for _, education := range educations {
+		if education.ID == id {
+			return education, true
 		}
 	}
 
-	return Job{}, false
+	return Education{}, false
 }
 
-func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
+func handleRequestUpdateEducation(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		page("Edit Job", jobEdit(Job{}, "Could not read the form.")).Render(r.Context(), w)
+		page("Edit Education", educationEdit(Education{}, "Could not read the form.")).Render(r.Context(), w)
 		return
 	}
 
-	next := Job{
+	next := Education{
 		Company:  strings.TrimSpace(r.FormValue("company")),
 		Location: strings.TrimSpace(r.FormValue("location")),
 		Title:    strings.TrimSpace(r.FormValue("title")),
@@ -62,7 +61,7 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 		ID, err := strconv.Atoi(id)
 		if err != nil {
 			w.WriteHeader(http.StatusUnprocessableEntity)
-			page("Edit Job", jobEdit(next, "Invalid job ID.")).Render(r.Context(), w)
+			page("Edit Education", educationEdit(next, "Invalid education ID.")).Render(r.Context(), w)
 			return
 		}
 		next.ID = ID
@@ -72,14 +71,14 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 
 	if next.Company == "" {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		page("Edit Job", jobEdit(next, "Company is required.")).Render(r.Context(), w)
+		page("Edit Education", educationEdit(next, "Company is required.")).Render(r.Context(), w)
 		return
 	}
 
 	// Title. Required. We double check it, too
 	if next.Title == "" {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		page("Edit Job", jobEdit(next, "Title is required.")).Render(r.Context(), w)
+		page("Edit Education", educationEdit(next, "Title is required.")).Render(r.Context(), w)
 		return
 	}
 
@@ -90,7 +89,7 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		page("Edit Job", jobEdit(next, err.Error())).Render(r.Context(), w)
+		page("Edit Education", educationEdit(next, err.Error())).Render(r.Context(), w)
 		return
 	}
 	next.Start = start
@@ -102,29 +101,29 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 		)
 		if err != nil {
 			w.WriteHeader(http.StatusUnprocessableEntity)
-			page("Edit Job", jobEdit(next, err.Error())).Render(r.Context(), w)
+			page("Edit Education", educationEdit(next, err.Error())).Render(r.Context(), w)
 			return
 		}
 
 		if end.Before(next.Start) {
 			w.WriteHeader(http.StatusUnprocessableEntity)
-			page("Edit Job", jobEdit(next, "Check your dates")).Render(r.Context(), w)
+			page("Edit Education", educationEdit(next, "Check your dates")).Render(r.Context(), w)
 			return
 		}
 		next.End = end
 	}
 
-	nextJobs := append([]Job(nil), jobs...)
+	nextEducations := append([]Education(nil), educations...)
 
 	if next.ID == 0 {
-		next.ID = nextJobID()
-		nextJobs = append(nextJobs, next)
+		next.ID = nextEducationID()
+		nextEducations = append(nextEducations, next)
 	} else {
 		found := false
 
-		for i := range nextJobs {
-			if nextJobs[i].ID == next.ID {
-				nextJobs[i] = next
+		for i := range nextEducations {
+			if nextEducations[i].ID == next.ID {
+				nextEducations[i] = next
 				found = true
 				break
 			}
@@ -132,33 +131,33 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 
 		if !found {
 			w.WriteHeader(http.StatusNotFound)
-			page("Edit Job", jobEdit(next, "Job not found.")).Render(r.Context(), w)
+			page("Edit Education", educationEdit(next, "Education not found.")).Render(r.Context(), w)
 			return
 		}
 	}
 
-	data, err := json.Marshal(nextJobs)
+	data, err := json.Marshal(nextEducations)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		page("Edit Job", jobEdit(next, "Could not encode the data.")).Render(r.Context(), w)
+		page("Edit Education", educationEdit(next, "Could not encode the data.")).Render(r.Context(), w)
 		return
 	}
 
-	err = writeString("jobs.json", string(data))
+	err = writeString("educations.json", string(data))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		page("Edit Job", jobEdit(next, "Could not save the jobs.")).Render(r.Context(), w)
+		page("Edit Education", educationEdit(next, "Could not save the educations.")).Render(r.Context(), w)
 		return
 	}
 
-	jobs = nextJobs
+	educations = nextEducations
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-templ jobEdit(value Job, err string) {
-	<h1>Change job?</h1>
-	<form action="/job" method="post">
+templ educationEdit(value Education, err string) {
+	<h1>Change education?</h1>
+	<form action="/education" method="post">
 		if value.ID != 0 {
 			<input
 				type="hidden"
@@ -205,7 +204,7 @@ templ jobEdit(value Job, err string) {
 			name="startYear"
 			id="startYear"
 			type="number"
-			min={ strconv.Itoa(earliestJobYear()) }
+			min={ strconv.Itoa(earliestEducationYear()) }
 			max={ strconv.Itoa(thisYear()) }
 			value={ valueOrEmptyString(int(value.Start.Year)) }
 			required
@@ -217,7 +216,7 @@ templ jobEdit(value Job, err string) {
 				name="current"
 				checked?={ value.Current }
 			/>
-			Current job
+			Current education
 		</label>
 		<br/>
 		<label for="endMonth">End month</label>
@@ -235,7 +234,7 @@ templ jobEdit(value Job, err string) {
 			name="endYear"
 			id="endYear"
 			type="number"
-			min={ strconv.Itoa(earliestJobYear()) }
+			min={ strconv.Itoa(earliestEducationYear()) }
 			max={ strconv.Itoa(thisYear()) }
 			value={ valueOrEmptyString(int(value.End.Year)) }
 		/>
@@ -248,52 +247,52 @@ templ jobEdit(value Job, err string) {
 	<a href="/">Cancel</a>
 }
 
-func handleJobEdit(w http.ResponseWriter, r *http.Request) {
+func handleEducationEdit(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	job, found := findJob(id)
+	education, found := findEducation(id)
 	if !found {
 		http.NotFound(w, r)
 		return
 	}
 
-	page("Edit Job", jobEdit(job, "")).Render(r.Context(), w)
+	page("Edit Education", educationEdit(education, "")).Render(r.Context(), w)
 }
 
-func handleJobAdd(w http.ResponseWriter, r *http.Request) {
-	page("Add Job", jobEdit(Job{}, "")).Render(r.Context(), w)
+func handleEducationAdd(w http.ResponseWriter, r *http.Request) {
+	page("Add Education", educationEdit(Education{}, "")).Render(r.Context(), w)
 }
 
-templ JobAddLink() {
-	<a href="/job">[Add]</a>
+templ EducationAddLink() {
+	<a href="/education">[Add]</a>
 }
 
-templ jobList() {
-	for _, job := range jobs {
-		@jobEditLink(job)
+templ educationList() {
+	for _, education := range educations {
+		@educationEditLink(education)
 	}
 }
 
-templ jobEditLink(job Job) {
+templ educationEditLink(education Education) {
 	<div>
-		<span>{ job.Company } - { job.Title }</span>
-		<a href={ "/job/" + strconv.Itoa(job.ID) }>[Edit]</a>
+		<span>{ education.Company } - { education.Title }</span>
+		<a href={ "/education/" + strconv.Itoa(education.ID) }>[Edit]</a>
 	</div>
 }
 
 func init() {
-	saved, err := readString("jobs.json")
+	saved, err := readString("educations.json")
 	if err == nil {
-		if err := json.Unmarshal([]byte(saved), &jobs); err != nil {
-			log.Println("There were errors reading jobs data.")
+		if err := json.Unmarshal([]byte(saved), &educations); err != nil {
+			log.Println("There were errors reading educations data.")
 		}
 	}
 
-	http.HandleFunc("GET /job", handleJobAdd)
-	http.HandleFunc("GET /job/{id}", handleJobEdit)
-	http.HandleFunc("POST /job", handleRequestUpdateJob)
+	http.HandleFunc("GET /education", handleEducationAdd)
+	http.HandleFunc("GET /education/{id}", handleEducationEdit)
+	http.HandleFunc("POST /education", handleRequestUpdateEducation)
 }

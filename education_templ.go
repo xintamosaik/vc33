@@ -10,14 +10,13 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"encoding/json"
-
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
 )
 
-type Job struct {
+type Education struct {
 	ID       int       `json:"id"`
 	Company  string    `json:"company"`
 	Location string    `json:"location"`
@@ -27,37 +26,37 @@ type Job struct {
 	Current  bool      `json:"current"`
 }
 
-var jobs []Job
+var educations []Education
 
-func nextJobID() int {
+func nextEducationID() int {
 	maxID := 0
 
-	for _, job := range jobs {
-		if job.ID > maxID {
-			maxID = job.ID
+	for _, education := range educations {
+		if education.ID > maxID {
+			maxID = education.ID
 		}
 	}
 
 	return maxID + 1
 }
-func findJob(id int) (Job, bool) {
-	for _, job := range jobs {
-		if job.ID == id {
-			return job, true
+func findEducation(id int) (Education, bool) {
+	for _, education := range educations {
+		if education.ID == id {
+			return education, true
 		}
 	}
 
-	return Job{}, false
+	return Education{}, false
 }
 
-func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
+func handleRequestUpdateEducation(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		page("Edit Job", jobEdit(Job{}, "Could not read the form.")).Render(r.Context(), w)
+		page("Edit Education", educationEdit(Education{}, "Could not read the form.")).Render(r.Context(), w)
 		return
 	}
 
-	next := Job{
+	next := Education{
 		Company:  strings.TrimSpace(r.FormValue("company")),
 		Location: strings.TrimSpace(r.FormValue("location")),
 		Title:    strings.TrimSpace(r.FormValue("title")),
@@ -70,7 +69,7 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 		ID, err := strconv.Atoi(id)
 		if err != nil {
 			w.WriteHeader(http.StatusUnprocessableEntity)
-			page("Edit Job", jobEdit(next, "Invalid job ID.")).Render(r.Context(), w)
+			page("Edit Education", educationEdit(next, "Invalid education ID.")).Render(r.Context(), w)
 			return
 		}
 		next.ID = ID
@@ -80,14 +79,14 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 
 	if next.Company == "" {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		page("Edit Job", jobEdit(next, "Company is required.")).Render(r.Context(), w)
+		page("Edit Education", educationEdit(next, "Company is required.")).Render(r.Context(), w)
 		return
 	}
 
 	// Title. Required. We double check it, too
 	if next.Title == "" {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		page("Edit Job", jobEdit(next, "Title is required.")).Render(r.Context(), w)
+		page("Edit Education", educationEdit(next, "Title is required.")).Render(r.Context(), w)
 		return
 	}
 
@@ -98,7 +97,7 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 	)
 	if err != nil {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		page("Edit Job", jobEdit(next, err.Error())).Render(r.Context(), w)
+		page("Edit Education", educationEdit(next, err.Error())).Render(r.Context(), w)
 		return
 	}
 	next.Start = start
@@ -110,29 +109,29 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 		)
 		if err != nil {
 			w.WriteHeader(http.StatusUnprocessableEntity)
-			page("Edit Job", jobEdit(next, err.Error())).Render(r.Context(), w)
+			page("Edit Education", educationEdit(next, err.Error())).Render(r.Context(), w)
 			return
 		}
 
 		if end.Before(next.Start) {
 			w.WriteHeader(http.StatusUnprocessableEntity)
-			page("Edit Job", jobEdit(next, "Check your dates")).Render(r.Context(), w)
+			page("Edit Education", educationEdit(next, "Check your dates")).Render(r.Context(), w)
 			return
 		}
 		next.End = end
 	}
 
-	nextJobs := append([]Job(nil), jobs...)
+	nextEducations := append([]Education(nil), educations...)
 
 	if next.ID == 0 {
-		next.ID = nextJobID()
-		nextJobs = append(nextJobs, next)
+		next.ID = nextEducationID()
+		nextEducations = append(nextEducations, next)
 	} else {
 		found := false
 
-		for i := range nextJobs {
-			if nextJobs[i].ID == next.ID {
-				nextJobs[i] = next
+		for i := range nextEducations {
+			if nextEducations[i].ID == next.ID {
+				nextEducations[i] = next
 				found = true
 				break
 			}
@@ -140,31 +139,31 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 
 		if !found {
 			w.WriteHeader(http.StatusNotFound)
-			page("Edit Job", jobEdit(next, "Job not found.")).Render(r.Context(), w)
+			page("Edit Education", educationEdit(next, "Education not found.")).Render(r.Context(), w)
 			return
 		}
 	}
 
-	data, err := json.Marshal(nextJobs)
+	data, err := json.Marshal(nextEducations)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		page("Edit Job", jobEdit(next, "Could not encode the data.")).Render(r.Context(), w)
+		page("Edit Education", educationEdit(next, "Could not encode the data.")).Render(r.Context(), w)
 		return
 	}
 
-	err = writeString("jobs.json", string(data))
+	err = writeString("educations.json", string(data))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		page("Edit Job", jobEdit(next, "Could not save the jobs.")).Render(r.Context(), w)
+		page("Edit Education", educationEdit(next, "Could not save the educations.")).Render(r.Context(), w)
 		return
 	}
 
-	jobs = nextJobs
+	educations = nextEducations
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func jobEdit(value Job, err string) templ.Component {
+func educationEdit(value Education, err string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -185,7 +184,7 @@ func jobEdit(value Job, err string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<h1>Change job?</h1><form action=\"/job\" method=\"post\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<h1>Change education?</h1><form action=\"/education\" method=\"post\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -197,7 +196,7 @@ func jobEdit(value Job, err string) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(value.ID))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 166, Col: 34}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 165, Col: 34}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 			if templ_7745c5c3_Err != nil {
@@ -215,7 +214,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(value.Company)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 173, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 172, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {
@@ -228,7 +227,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(value.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 181, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 180, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 		if templ_7745c5c3_Err != nil {
@@ -241,7 +240,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(value.Location)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 189, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 188, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 		if templ_7745c5c3_Err != nil {
@@ -254,7 +253,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(valueOrEmptyString(int(value.Start.Month)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 199, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 198, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 		if templ_7745c5c3_Err != nil {
@@ -265,9 +264,9 @@ func jobEdit(value Job, err string) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(earliestJobYear()))
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(earliestEducationYear()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 208, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 207, Col: 46}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 		if templ_7745c5c3_Err != nil {
@@ -280,7 +279,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(thisYear()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 209, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 208, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 		if templ_7745c5c3_Err != nil {
@@ -293,7 +292,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.ResolveAttributeValue(valueOrEmptyString(int(value.Start.Year)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 210, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 209, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
 		if templ_7745c5c3_Err != nil {
@@ -309,14 +308,14 @@ func jobEdit(value Job, err string) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "> Current job</label><br><label for=\"endMonth\">End month</label> <input name=\"endMonth\" id=\"endMonth\" type=\"number\" min=\"1\" max=\"12\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "> Current education</label><br><label for=\"endMonth\">End month</label> <input name=\"endMonth\" id=\"endMonth\" type=\"number\" min=\"1\" max=\"12\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(valueOrEmptyString(int(value.End.Month)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 230, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 229, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
 		if templ_7745c5c3_Err != nil {
@@ -327,9 +326,9 @@ func jobEdit(value Job, err string) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(earliestJobYear()))
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(earliestEducationYear()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 238, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 237, Col: 46}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
 		if templ_7745c5c3_Err != nil {
@@ -342,7 +341,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(thisYear()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 239, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 238, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var12)
 		if templ_7745c5c3_Err != nil {
@@ -355,7 +354,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue(valueOrEmptyString(int(value.End.Year)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 240, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 239, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
 		if templ_7745c5c3_Err != nil {
@@ -373,7 +372,7 @@ func jobEdit(value Job, err string) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(err)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 246, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 245, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -392,27 +391,27 @@ func jobEdit(value Job, err string) templ.Component {
 	})
 }
 
-func handleJobEdit(w http.ResponseWriter, r *http.Request) {
+func handleEducationEdit(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
 
-	job, found := findJob(id)
+	education, found := findEducation(id)
 	if !found {
 		http.NotFound(w, r)
 		return
 	}
 
-	page("Edit Job", jobEdit(job, "")).Render(r.Context(), w)
+	page("Edit Education", educationEdit(education, "")).Render(r.Context(), w)
 }
 
-func handleJobAdd(w http.ResponseWriter, r *http.Request) {
-	page("Add Job", jobEdit(Job{}, "")).Render(r.Context(), w)
+func handleEducationAdd(w http.ResponseWriter, r *http.Request) {
+	page("Add Education", educationEdit(Education{}, "")).Render(r.Context(), w)
 }
 
-func JobAddLink() templ.Component {
+func EducationAddLink() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -433,7 +432,7 @@ func JobAddLink() templ.Component {
 			templ_7745c5c3_Var15 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<a href=\"/job\">[Add]</a>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<a href=\"/education\">[Add]</a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -441,7 +440,7 @@ func JobAddLink() templ.Component {
 	})
 }
 
-func jobList() templ.Component {
+func educationList() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -462,8 +461,8 @@ func jobList() templ.Component {
 			templ_7745c5c3_Var16 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		for _, job := range jobs {
-			templ_7745c5c3_Err = jobEditLink(job).Render(ctx, templ_7745c5c3_Buffer)
+		for _, education := range educations {
+			templ_7745c5c3_Err = educationEditLink(education).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -472,7 +471,7 @@ func jobList() templ.Component {
 	})
 }
 
-func jobEditLink(job Job) templ.Component {
+func educationEditLink(education Education) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -498,9 +497,9 @@ func jobEditLink(job Job) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(job.Company)
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(education.Company)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 283, Col: 21}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 282, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -511,9 +510,9 @@ func jobEditLink(job Job) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var19 string
-		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(job.Title)
+		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(education.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 283, Col: 37}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 282, Col: 49}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
@@ -524,9 +523,9 @@ func jobEditLink(job Job) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var20 templ.SafeURL
-		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinURLErrs("/job/" + strconv.Itoa(job.ID))
+		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinURLErrs("/education/" + strconv.Itoa(education.ID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 284, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 283, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
@@ -541,16 +540,16 @@ func jobEditLink(job Job) templ.Component {
 }
 
 func init() {
-	saved, err := readString("jobs.json")
+	saved, err := readString("educations.json")
 	if err == nil {
-		if err := json.Unmarshal([]byte(saved), &jobs); err != nil {
-			log.Println("There were errors reading jobs data.")
+		if err := json.Unmarshal([]byte(saved), &educations); err != nil {
+			log.Println("There were errors reading educations data.")
 		}
 	}
 
-	http.HandleFunc("GET /job", handleJobAdd)
-	http.HandleFunc("GET /job/{id}", handleJobEdit)
-	http.HandleFunc("POST /job", handleRequestUpdateJob)
+	http.HandleFunc("GET /education", handleEducationAdd)
+	http.HandleFunc("GET /education/{id}", handleEducationEdit)
+	http.HandleFunc("POST /education", handleRequestUpdateEducation)
 }
 
 var _ = templruntime.GeneratedTemplate
