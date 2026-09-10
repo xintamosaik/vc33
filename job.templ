@@ -3,11 +3,11 @@ package main
 import (
 	"encoding/json"
 	"errors"
-    "time"
 	"log"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Job struct {
@@ -20,7 +20,28 @@ type Job struct {
 	Current  bool      `json:"current"`
 }
 
-var job Job
+var jobs []Job
+
+func nextJobID() int {
+	maxID := 0
+
+	for _, job := range jobs {
+		if job.ID > maxID {
+			maxID = job.ID
+		}
+	}
+
+	return maxID + 1
+}
+func findJob(id int) (Job, bool) {
+	for _, job := range jobs {
+		if job.ID == id {
+			return job, true
+		}
+	}
+
+	return Job{}, false
+}
 
 type Month int
 type Year int
@@ -29,6 +50,7 @@ type MonthDate struct {
 	Month Month `json:"month"`
 	Year  Year  `json:"year"`
 }
+
 const maxCareerHistoryYears = 40
 
 func earliestJobYear() int {
@@ -89,7 +111,7 @@ func parseMonthDate(monthValue, yearValue string) (MonthDate, error) {
 func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		page("Edit Job", jobEdit(job, "Could not read the form.")).Render(r.Context(), w)
+		page("Edit Job", jobEdit(Job{}, "Could not read the form.")).Render(r.Context(), w)
 		return
 	}
 
@@ -158,20 +180,45 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 		next.End = end
 	}
 
-	data, err := json.Marshal(next)
+	nextJobs := append([]Job(nil), jobs...)
+
+	if next.ID == 0 {
+		next.ID = nextJobID()
+		nextJobs = append(nextJobs, next)
+	} else {
+		found := false
+
+		for i := range nextJobs {
+			if nextJobs[i].ID == next.ID {
+				nextJobs[i] = next
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			w.WriteHeader(http.StatusNotFound)
+			page("Edit Job", jobEdit(next, "Job not found.")).Render(r.Context(), w)
+			return
+		}
+	}
+
+	data, err := json.Marshal(nextJobs)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		page("Edit Job", jobEdit(next, "Could not encode the data.")).Render(r.Context(), w)
 		return
 	}
-	err = writeString("job.json", string(data))
+
+	err = writeString("jobs.json", string(data))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		page("Edit Job", jobEdit(next, "Could not save the job.")).Render(r.Context(), w)
+		page("Edit Job", jobEdit(next, "Could not save the jobs.")).Render(r.Context(), w)
 		return
 	}
 
-	job = next
+	jobs = nextJobs
+
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 func thisYear() int {
@@ -183,16 +230,17 @@ func valueOrEmptyString(number int) string {
 	}
 	return strconv.Itoa(number)
 }
+
 templ jobEdit(value Job, err string) {
 	<h1>Change job?</h1>
 	<form action="/job" method="post">
 		if value.ID != 0 {
-            <input
-                type="hidden"
-                name="id"
-                value={ strconv.Itoa(value.ID) }
-            />
-        }
+			<input
+				type="hidden"
+				name="id"
+				value={ strconv.Itoa(value.ID) }
+			/>
+		}
 		<label for="company">Company</label>
 		<input
 			name="company"
@@ -208,14 +256,14 @@ templ jobEdit(value Job, err string) {
 			value={ value.Title }
 			required
 		/>
-        	<br/>
+		<br/>
 		<label for="location">Location</label>
 		<input
 			name="location"
 			id="location"
 			value={ value.Location }
 		/>
-        <br/>
+		<br/>
 		<label for="startMonth">Start month</label>
 		<input
 			name="startMonth"
@@ -226,7 +274,7 @@ templ jobEdit(value Job, err string) {
 			value={ valueOrEmptyString(int(value.Start.Month)) }
 			required
 		/>
-        <br/>
+		<br/>
 		<label for="startYear">Start year</label>
 		<input
 			name="startYear"
@@ -237,7 +285,7 @@ templ jobEdit(value Job, err string) {
 			value={ valueOrEmptyString(int(value.Start.Year)) }
 			required
 		/>
-        <br/>
+		<br/>
 		<label>
 			<input
 				type="checkbox"
@@ -246,9 +294,9 @@ templ jobEdit(value Job, err string) {
 			/>
 			Current job
 		</label>
-        <br/>
-        <label for="endMonth">End month</label>
-        <input
+		<br/>
+		<label for="endMonth">End month</label>
+		<input
 			name="endMonth"
 			id="endMonth"
 			type="number"
@@ -256,7 +304,7 @@ templ jobEdit(value Job, err string) {
 			max="12"
 			value={ valueOrEmptyString(int(value.End.Month)) }
 		/>
-        <br/>
+		<br/>
 		<label for="endYear">End year</label>
 		<input
 			name="endYear"
@@ -266,7 +314,7 @@ templ jobEdit(value Job, err string) {
 			max={ strconv.Itoa(thisYear()) }
 			value={ valueOrEmptyString(int(value.End.Year)) }
 		/>
-        <br/>
+		<br/>
 		<button type="submit">Update</button>
 	</form>
 	if err != "" {
@@ -276,14 +324,34 @@ templ jobEdit(value Job, err string) {
 }
 
 func handleJobEdit(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	job, found := findJob(id)
+	if !found {
+		http.NotFound(w, r)
+		return
+	}
+
 	page("Edit Job", jobEdit(job, "")).Render(r.Context(), w)
 }
-
+func handleJobAdd(w http.ResponseWriter, r *http.Request) {
+	page("Add Job", jobEdit(Job{}, "")).Render(r.Context(), w)
+}
 templ JobAddLink() {
 	<a href="/job">[Add]</a>
 }
 
-templ jobEditLink() {
+templ jobList() {
+	for _, job := range jobs {
+		@jobEditLink(job)
+	}
+}
+
+templ jobEditLink(job Job) {
 	<div>
 		<span>Job: { job.Company } - { job.Title }</span>
 		<a href={ "/job/" + strconv.Itoa(job.ID) }>[Edit]</a>
@@ -291,13 +359,14 @@ templ jobEditLink() {
 }
 
 func init() {
-	saved, err := readString("job.json")
+	saved, err := readString("jobs.json")
 	if err == nil {
-		if err := json.Unmarshal([]byte(saved), &job); err != nil {
-			log.Println("There were errors reading job data.")
+		if err := json.Unmarshal([]byte(saved), &jobs); err != nil {
+			log.Println("There were errors reading jobs data.")
 		}
 	}
 
-	http.HandleFunc("GET /job", handleJobEdit)
+	http.HandleFunc("GET /job", handleJobAdd)
+	http.HandleFunc("GET /job/{id}", handleJobEdit)
 	http.HandleFunc("POST /job", handleRequestUpdateJob)
 }

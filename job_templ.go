@@ -28,7 +28,28 @@ type Job struct {
 	Current  bool      `json:"current"`
 }
 
-var job Job
+var jobs []Job
+
+func nextJobID() int {
+	maxID := 0
+
+	for _, job := range jobs {
+		if job.ID > maxID {
+			maxID = job.ID
+		}
+	}
+
+	return maxID + 1
+}
+func findJob(id int) (Job, bool) {
+	for _, job := range jobs {
+		if job.ID == id {
+			return job, true
+		}
+	}
+
+	return Job{}, false
+}
 
 type Month int
 type Year int
@@ -38,7 +59,11 @@ type MonthDate struct {
 	Year  Year  `json:"year"`
 }
 
-const soLongAgo = 40
+const maxCareerHistoryYears = 40
+
+func earliestJobYear() int {
+	return thisYear() - maxCareerHistoryYears
+}
 
 func (d MonthDate) Before(other MonthDate) bool {
 	if d.Year != other.Year {
@@ -67,7 +92,7 @@ func parseYear(value string) (Year, error) {
 		return 0, errors.New("year must be a number")
 	}
 
-	if n < thisYear()-soLongAgo || n > thisYear() {
+	if n < earliestJobYear() || n > thisYear() {
 		return 0, errors.New("invalid year")
 	}
 
@@ -94,7 +119,7 @@ func parseMonthDate(monthValue, yearValue string) (MonthDate, error) {
 func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		page("Edit Job", jobEdit(job, "Could not read the form.")).Render(r.Context(), w)
+		page("Edit Job", jobEdit(Job{}, "Could not read the form.")).Render(r.Context(), w)
 		return
 	}
 
@@ -163,20 +188,45 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 		next.End = end
 	}
 
-	data, err := json.Marshal(next)
+	nextJobs := append([]Job(nil), jobs...)
+
+	if next.ID == 0 {
+		next.ID = nextJobID()
+		nextJobs = append(nextJobs, next)
+	} else {
+		found := false
+
+		for i := range nextJobs {
+			if nextJobs[i].ID == next.ID {
+				nextJobs[i] = next
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			w.WriteHeader(http.StatusNotFound)
+			page("Edit Job", jobEdit(next, "Job not found.")).Render(r.Context(), w)
+			return
+		}
+	}
+
+	data, err := json.Marshal(nextJobs)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		page("Edit Job", jobEdit(next, "Could not encode the data.")).Render(r.Context(), w)
 		return
 	}
-	err = writeString("job.json", string(data))
+
+	err = writeString("jobs.json", string(data))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		page("Edit Job", jobEdit(next, "Could not save the job.")).Render(r.Context(), w)
+		page("Edit Job", jobEdit(next, "Could not save the jobs.")).Render(r.Context(), w)
 		return
 	}
 
-	job = next
+	jobs = nextJobs
+
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 func thisYear() int {
@@ -222,7 +272,7 @@ func jobEdit(value Job, err string) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(value.ID))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 188, Col: 46}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 241, Col: 34}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 			if templ_7745c5c3_Err != nil {
@@ -240,7 +290,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(value.Company)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 195, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 248, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {
@@ -253,7 +303,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(value.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 203, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 256, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 		if templ_7745c5c3_Err != nil {
@@ -266,7 +316,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(value.Location)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 211, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 264, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 		if templ_7745c5c3_Err != nil {
@@ -279,7 +329,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue(valueOrEmptyString(int(value.Start.Month)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 221, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 274, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 		if templ_7745c5c3_Err != nil {
@@ -290,9 +340,9 @@ func jobEdit(value Job, err string) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(thisYear() - soLongAgo))
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(earliestJobYear()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 230, Col: 45}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 283, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 		if templ_7745c5c3_Err != nil {
@@ -305,7 +355,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(thisYear()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 231, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 284, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 		if templ_7745c5c3_Err != nil {
@@ -318,7 +368,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.ResolveAttributeValue(valueOrEmptyString(int(value.Start.Year)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 232, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 285, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
 		if templ_7745c5c3_Err != nil {
@@ -341,7 +391,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(valueOrEmptyString(int(value.End.Month)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 252, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 305, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
 		if templ_7745c5c3_Err != nil {
@@ -352,9 +402,9 @@ func jobEdit(value Job, err string) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(thisYear() - soLongAgo))
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(earliestJobYear()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 260, Col: 45}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 313, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
 		if templ_7745c5c3_Err != nil {
@@ -367,7 +417,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(thisYear()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 261, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 314, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var12)
 		if templ_7745c5c3_Err != nil {
@@ -380,7 +430,7 @@ func jobEdit(value Job, err string) templ.Component {
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue(valueOrEmptyString(int(value.End.Year)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 262, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 315, Col: 50}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
 		if templ_7745c5c3_Err != nil {
@@ -398,7 +448,7 @@ func jobEdit(value Job, err string) templ.Component {
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(err)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 268, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 321, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -418,7 +468,22 @@ func jobEdit(value Job, err string) templ.Component {
 }
 
 func handleJobEdit(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	job, found := findJob(id)
+	if !found {
+		http.NotFound(w, r)
+		return
+	}
+
 	page("Edit Job", jobEdit(job, "")).Render(r.Context(), w)
+}
+func handleJobAdd(w http.ResponseWriter, r *http.Request) {
+	page("Add Job", jobEdit(Job{}, "")).Render(r.Context(), w)
 }
 
 func JobAddLink() templ.Component {
@@ -450,7 +515,7 @@ func JobAddLink() templ.Component {
 	})
 }
 
-func jobEditLink() templ.Component {
+func jobList() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -471,16 +536,47 @@ func jobEditLink() templ.Component {
 			templ_7745c5c3_Var16 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
+		for _, job := range jobs {
+			templ_7745c5c3_Err = jobEditLink(job).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		return nil
+	})
+}
+
+func jobEditLink(job Job) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var17 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var17 == nil {
+			templ_7745c5c3_Var17 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<div><span>Job: ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var17 string
-		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(job.Company)
+		var templ_7745c5c3_Var18 string
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(job.Company)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 283, Col: 26}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 356, Col: 26}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -488,12 +584,12 @@ func jobEditLink() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(job.Title)
+		var templ_7745c5c3_Var19 string
+		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(job.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 283, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 356, Col: 42}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -501,12 +597,12 @@ func jobEditLink() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var19 templ.SafeURL
-		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinURLErrs("/job/" + strconv.Itoa(job.ID))
+		var templ_7745c5c3_Var20 templ.SafeURL
+		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinURLErrs("/job/" + strconv.Itoa(job.ID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 284, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `job.templ`, Line: 357, Col: 42}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -519,14 +615,15 @@ func jobEditLink() templ.Component {
 }
 
 func init() {
-	saved, err := readString("job.json")
+	saved, err := readString("jobs.json")
 	if err == nil {
-		if err := json.Unmarshal([]byte(saved), &job); err != nil {
-			log.Println("There were errors reading job data.")
+		if err := json.Unmarshal([]byte(saved), &jobs); err != nil {
+			log.Println("There were errors reading jobs data.")
 		}
 	}
 
-	http.HandleFunc("GET /job", handleJobEdit)
+	http.HandleFunc("GET /job", handleJobAdd)
+	http.HandleFunc("GET /job/{id}", handleJobEdit)
 	http.HandleFunc("POST /job", handleRequestUpdateJob)
 }
 

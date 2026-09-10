@@ -4,21 +4,20 @@ import "net/http"
 
 templ home() {
 	<h1>Home</h1>
-    <main>
+	<main>
 		@userNameEditLink()
-        @professionEditLink()
-        @linkedinEditLink()
-      
-        @emailEditLink()
-        @gitEditLink()
-        <h2>
-        jobs 
-        @JobAddLink() 
-        </h2>
-
-        <p>education</p>
-        <p>skills</p>
-        <p>projects</p>
+		@professionEditLink()
+		@linkedinEditLink()
+		@emailEditLink()
+		@gitEditLink()
+		<h2>
+			Jobs
+			@JobAddLink()
+		</h2>
+		@jobList()
+		<p>education</p>
+		<p>skills</p>
+		<p>projects</p>
 	</main>
 }
 
@@ -27,5 +26,5 @@ func handleHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func init() {
-    http.HandleFunc("GET /{$}", handleHome)
+	http.HandleFunc("GET /{$}", handleHome)
 }
