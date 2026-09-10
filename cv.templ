@@ -218,12 +218,7 @@ templ cvAdd(value CV, err string) {
 templ cvEdit(value CV, err string) {
 	@cvNav()
 	<h1>Change CV?</h1>
-	<form action="/cv" method="post">
-		<input
-			type="hidden"
-			name="id"
-			value={ strconv.Itoa(value.ID) }
-		/>
+	<form action={ "/cv/" + strconv.Itoa(value.ID) } method="post">
 		@cvName(value.Name)
 		<br/>
 		@cvSummary(value.Summary)
