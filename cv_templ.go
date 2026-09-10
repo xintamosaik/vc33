@@ -115,28 +115,27 @@ func handleRequestAddCV(w http.ResponseWriter, r *http.Request) {
 	)
 }
 func handleRequestUpdateCV(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		page("Edit CV", cvEdit(CV{}, "Could not read the form.")).Render(r.Context(), w)
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
 		return
 	}
 
-	next := CV{
-		Name:    strings.TrimSpace(r.FormValue("name")),
-		Summary: strings.TrimSpace(r.FormValue("summary")),
+	existing, found := findCV(id)
+	if !found {
+		http.NotFound(w, r)
+		return
 	}
 
-	// ID can be empty, we would need to deal with empty IDs (new entries)
-	id := r.FormValue("id")
-	if id != "" {
-		ID, err := strconv.Atoi(id)
-		if err != nil {
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			page("Edit CV", cvEdit(next, "Invalid cv ID.")).Render(r.Context(), w)
-			return
-		}
-		next.ID = ID
+	if err := r.ParseForm(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		page("Edit CV", cvEdit(existing, "Could not read the form.")).Render(r.Context(), w)
+		return
 	}
+
+	next := existing
+	next.Name = strings.TrimSpace(r.FormValue("name"))
+	next.Summary = strings.TrimSpace(r.FormValue("summary"))
 
 	if next.Name == "" {
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -152,24 +151,10 @@ func handleRequestUpdateCV(w http.ResponseWriter, r *http.Request) {
 
 	nextCVs := append([]CV(nil), cvs...)
 
-	if next.ID == 0 {
-		next.ID = nextCVID()
-		nextCVs = append(nextCVs, next)
-	} else {
-		found := false
-
-		for i := range nextCVs {
-			if nextCVs[i].ID == next.ID {
-				nextCVs[i] = next
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			w.WriteHeader(http.StatusNotFound)
-			page("Edit CV", cvEdit(next, "CV not found.")).Render(r.Context(), w)
-			return
+	for i := range nextCVs {
+		if nextCVs[i].ID == id {
+			nextCVs[i] = next
+			break
 		}
 	}
 
@@ -180,16 +165,15 @@ func handleRequestUpdateCV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = writeString("cvs.json", string(data))
-	if err != nil {
+	if err := writeString("cvs.json", string(data)); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		page("Edit CV", cvEdit(next, "Could not save the cvs.")).Render(r.Context(), w)
+		page("Edit CV", cvEdit(next, "Could not save the CV.")).Render(r.Context(), w)
 		return
 	}
 
 	cvs = nextCVs
 
-	http.Redirect(w, r, "/cv/"+strconv.Itoa(next.ID), http.StatusSeeOther)
+	http.Redirect(w, r, "/cvs", http.StatusSeeOther)
 }
 
 func cvName(name string) templ.Component {
@@ -220,7 +204,7 @@ func cvName(name string) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 192, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 176, Col: 14}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
@@ -262,7 +246,7 @@ func cvSummary(summary string) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(summary)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 202, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 186, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 		if templ_7745c5c3_Err != nil {
@@ -387,7 +371,7 @@ func cvAdd(value CV, err string) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(err)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 229, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 213, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -438,7 +422,7 @@ func cvEdit(value CV, err string) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(value.ID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 241, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 225, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
 		if templ_7745c5c3_Err != nil {
@@ -472,7 +456,7 @@ func cvEdit(value CV, err string) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(err)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 250, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 234, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {

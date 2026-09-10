@@ -107,28 +107,27 @@ func handleRequestAddCV(w http.ResponseWriter, r *http.Request) {
 	)
 }
 func handleRequestUpdateCV(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		page("Edit CV", cvEdit(CV{}, "Could not read the form.")).Render(r.Context(), w)
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
 		return
 	}
 
-	next := CV{
-		Name:    strings.TrimSpace(r.FormValue("name")),
-		Summary: strings.TrimSpace(r.FormValue("summary")),
+	existing, found := findCV(id)
+	if !found {
+		http.NotFound(w, r)
+		return
 	}
 
-	// ID can be empty, we would need to deal with empty IDs (new entries)
-	id := r.FormValue("id")
-	if id != "" {
-		ID, err := strconv.Atoi(id)
-		if err != nil {
-			w.WriteHeader(http.StatusUnprocessableEntity)
-			page("Edit CV", cvEdit(next, "Invalid cv ID.")).Render(r.Context(), w)
-			return
-		}
-		next.ID = ID
+	if err := r.ParseForm(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		page("Edit CV", cvEdit(existing, "Could not read the form.")).Render(r.Context(), w)
+		return
 	}
+
+	next := existing
+	next.Name = strings.TrimSpace(r.FormValue("name"))
+	next.Summary = strings.TrimSpace(r.FormValue("summary"))
 
 	if next.Name == "" {
 		w.WriteHeader(http.StatusUnprocessableEntity)
@@ -144,24 +143,10 @@ func handleRequestUpdateCV(w http.ResponseWriter, r *http.Request) {
 
 	nextCVs := append([]CV(nil), cvs...)
 
-	if next.ID == 0 {
-		next.ID = nextCVID()
-		nextCVs = append(nextCVs, next)
-	} else {
-		found := false
-
-		for i := range nextCVs {
-			if nextCVs[i].ID == next.ID {
-				nextCVs[i] = next
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			w.WriteHeader(http.StatusNotFound)
-			page("Edit CV", cvEdit(next, "CV not found.")).Render(r.Context(), w)
-			return
+	for i := range nextCVs {
+		if nextCVs[i].ID == id {
+			nextCVs[i] = next
+			break
 		}
 	}
 
@@ -172,16 +157,15 @@ func handleRequestUpdateCV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = writeString("cvs.json", string(data))
-	if err != nil {
+	if err := writeString("cvs.json", string(data)); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		page("Edit CV", cvEdit(next, "Could not save the cvs.")).Render(r.Context(), w)
+		page("Edit CV", cvEdit(next, "Could not save the CV.")).Render(r.Context(), w)
 		return
 	}
 
 	cvs = nextCVs
 
-	http.Redirect(w, r, "/cv/"+strconv.Itoa(next.ID), http.StatusSeeOther)
+	http.Redirect(w, r, "/cvs", http.StatusSeeOther)
 }
 
 templ cvName(name string) {
