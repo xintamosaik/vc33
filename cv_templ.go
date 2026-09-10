@@ -63,7 +63,57 @@ func findCV(id int) (CV, bool) {
 
 	return CV{}, false
 }
+func handleRequestAddCV(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		page("Add CV", cvAdd(CV{}, "Could not read the form.")).Render(r.Context(), w)
+		return
+	}
 
+	next := CV{
+		Name:    strings.TrimSpace(r.FormValue("name")),
+		Summary: strings.TrimSpace(r.FormValue("summary")),
+	}
+
+	if next.Name == "" {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		page("Add CV", cvAdd(next, "Name is required.")).Render(r.Context(), w)
+		return
+	}
+
+	if next.Summary == "" {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		page("Add CV", cvAdd(next, "Summary is required.")).Render(r.Context(), w)
+		return
+	}
+
+	next.ID = nextCVID()
+
+	nextCVs := append([]CV(nil), cvs...)
+	nextCVs = append(nextCVs, next)
+
+	data, err := json.Marshal(nextCVs)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Add CV", cvAdd(next, "Could not encode the data.")).Render(r.Context(), w)
+		return
+	}
+
+	if err := writeString("cvs.json", string(data)); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Add CV", cvAdd(next, "Could not save the CV.")).Render(r.Context(), w)
+		return
+	}
+
+	cvs = nextCVs
+
+	http.Redirect(
+		w,
+		r,
+		"/cv/"+strconv.Itoa(next.ID),
+		http.StatusSeeOther,
+	)
+}
 func handleRequestUpdateCV(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -170,7 +220,7 @@ func cvName(name string) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.ResolveAttributeValue(name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 142, Col: 14}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 192, Col: 14}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 		if templ_7745c5c3_Err != nil {
@@ -212,7 +262,7 @@ func cvSummary(summary string) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(summary)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 152, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 202, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 		if templ_7745c5c3_Err != nil {
@@ -337,7 +387,7 @@ func cvAdd(value CV, err string) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(err)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 179, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 229, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -388,7 +438,7 @@ func cvEdit(value CV, err string) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(strconv.Itoa(value.ID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 191, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 241, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
 		if templ_7745c5c3_Err != nil {
@@ -422,7 +472,7 @@ func cvEdit(value CV, err string) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(err)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 200, Col: 23}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `cv.templ`, Line: 250, Col: 23}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -471,7 +521,8 @@ func init() {
 
 	http.HandleFunc("GET /cv", handleCVAdd)
 	http.HandleFunc("GET /cv/{id}", handleCVEdit)
-	http.HandleFunc("POST /cv", handleRequestUpdateCV)
+	http.HandleFunc("POST /cv", handleRequestAddCV)
+	http.HandleFunc("POST /cv/{id}", handleRequestUpdateCV)
 }
 
 var _ = templruntime.GeneratedTemplate

@@ -55,7 +55,57 @@ func findCV(id int) (CV, bool) {
 
 	return CV{}, false
 }
+func handleRequestAddCV(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		page("Add CV", cvAdd(CV{}, "Could not read the form.")).Render(r.Context(), w)
+		return
+	}
 
+	next := CV{
+		Name:    strings.TrimSpace(r.FormValue("name")),
+		Summary: strings.TrimSpace(r.FormValue("summary")),
+	}
+
+	if next.Name == "" {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		page("Add CV", cvAdd(next, "Name is required.")).Render(r.Context(), w)
+		return
+	}
+
+	if next.Summary == "" {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		page("Add CV", cvAdd(next, "Summary is required.")).Render(r.Context(), w)
+		return
+	}
+
+	next.ID = nextCVID()
+
+	nextCVs := append([]CV(nil), cvs...)
+	nextCVs = append(nextCVs, next)
+
+	data, err := json.Marshal(nextCVs)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Add CV", cvAdd(next, "Could not encode the data.")).Render(r.Context(), w)
+		return
+	}
+
+	if err := writeString("cvs.json", string(data)); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Add CV", cvAdd(next, "Could not save the CV.")).Render(r.Context(), w)
+		return
+	}
+
+	cvs = nextCVs
+
+	http.Redirect(
+		w,
+		r,
+		"/cv/"+strconv.Itoa(next.ID),
+		http.StatusSeeOther,
+	)
+}
 func handleRequestUpdateCV(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -232,5 +282,6 @@ func init() {
 
 	http.HandleFunc("GET /cv", handleCVAdd)
 	http.HandleFunc("GET /cv/{id}", handleCVEdit)
-	http.HandleFunc("POST /cv", handleRequestUpdateCV)
+	http.HandleFunc("POST /cv", handleRequestAddCV)
+	http.HandleFunc("POST /cv/{id}", handleRequestUpdateCV)
 }
