@@ -181,11 +181,13 @@ func valueOrEmptyString(number int) string {
 templ jobEdit(value Job, err string) {
 	<h1>Change job?</h1>
 	<form action="/job" method="post">
-		<input
-			type="hidden"
-			name="id"
-			value={ strconv.Itoa(value.ID) }
-		/>
+		if value.ID != 0 {
+            <input
+                type="hidden"
+                name="id"
+                value={ strconv.Itoa(value.ID) }
+            />
+        }
 		<label for="company">Company</label>
 		<input
 			name="company"
@@ -216,7 +218,7 @@ templ jobEdit(value Job, err string) {
 			type="number"
 			min="1"
 			max="12"
-			value={ strconv.Itoa(int(value.Start.Month)) }
+			value={ valueOrEmptyString(int(value.Start.Month)) }
 			required
 		/>
         <br/>
@@ -226,8 +228,8 @@ templ jobEdit(value Job, err string) {
 			id="startYear"
 			type="number"
 			min="1900"
-			max="2100"
-			value={ strconv.Itoa(int(value.Start.Year)) }
+			max={ strconv.Itoa(thisYear()) }
+			value={ valueOrEmptyString(int(value.Start.Year)) }
 			required
 		/>
         <br/>
@@ -245,7 +247,7 @@ templ jobEdit(value Job, err string) {
 			name="endMonth"
 			id="endMonth"
 			type="number"
-			min="0"
+			min="1"
 			max="12"
 			value={ valueOrEmptyString(int(value.End.Month)) }
 		/>
@@ -255,8 +257,8 @@ templ jobEdit(value Job, err string) {
 			name="endYear"
 			id="endYear"
 			type="number"
-			min="0"
-			max={ thisYear() }
+			min="1900"
+			max={ strconv.Itoa(thisYear()) }
 			value={ valueOrEmptyString(int(value.End.Year)) }
 		/>
         <br/>
