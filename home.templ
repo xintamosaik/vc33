@@ -5,7 +5,7 @@ import "net/http"
 templ home() {
 	<h1>Profile</h1>
 	<main>
-        <h2>Contact</h2>
+		<h2>Contact</h2>
 		@userNameEditLink()
 		@professionEditLink()
 		@linkedinEditLink()
@@ -13,18 +13,22 @@ templ home() {
 		@gitEditLink()
 		<h2>
 			<span>Jobs</span>
-			
-            <span>
-            @JobAddLink()
-            </span>
+			<span>
+				@JobAddLink()
+			</span>
 		</h2>
 		@jobList()
-		<h2>Education</h2>
-        <p>..</p>
+		<h2>
+			<span>Education</span>
+			<span>
+				@EducationAddLink()
+			</span>
+		</h2>
+		@educationList()
 		<h2>Skills</h2>
-        <p>..</p>
+		<p>..</p>
 		<h2>Projects</h2>
-        <p>..</p>
+		<p>..</p>
 	</main>
 }
 

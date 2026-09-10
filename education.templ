@@ -9,13 +9,13 @@ import (
 )
 
 type Education struct {
-	ID       int       `json:"id"`
-	Company  string    `json:"company"`
-	Location string    `json:"location"`
-	Title    string    `json:"title"`
-	Start    MonthDate `json:"start"`
-	End      MonthDate `json:"end,omitzero"`
-	Current  bool      `json:"current"`
+	ID          int       `json:"id"`
+	Institution string    `json:"institution"`
+	Location    string    `json:"location"`
+	Degree      string    `json:"title"`
+	Start       MonthDate `json:"start"`
+	End         MonthDate `json:"end,omitzero"`
+	Current     bool      `json:"current"`
 }
 
 var educations []Education
@@ -49,10 +49,10 @@ func handleRequestUpdateEducation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	next := Education{
-		Company:  strings.TrimSpace(r.FormValue("company")),
-		Location: strings.TrimSpace(r.FormValue("location")),
-		Title:    strings.TrimSpace(r.FormValue("title")),
-		Current:  r.FormValue("current") != "",
+		Institution: strings.TrimSpace(r.FormValue("institution")),
+		Location:    strings.TrimSpace(r.FormValue("location")),
+		Degree:      strings.TrimSpace(r.FormValue("title")),
+		Current:     r.FormValue("current") != "",
 	}
 
 	// ID can be empty, we would need to deal with empty IDs (new entries)
@@ -67,18 +67,18 @@ func handleRequestUpdateEducation(w http.ResponseWriter, r *http.Request) {
 		next.ID = ID
 	}
 
-	// Company needs to be filled. Even if the browser checks, we check again
+	// Institution needs to be filled. Even if the browser checks, we check again
 
-	if next.Company == "" {
+	if next.Institution == "" {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		page("Edit Education", educationEdit(next, "Company is required.")).Render(r.Context(), w)
+		page("Edit Education", educationEdit(next, "Institution is required.")).Render(r.Context(), w)
 		return
 	}
 
-	// Title. Required. We double check it, too
-	if next.Title == "" {
+	// Degree. Required. We double check it, too
+	if next.Degree == "" {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		page("Edit Education", educationEdit(next, "Title is required.")).Render(r.Context(), w)
+		page("Edit Education", educationEdit(next, "Degree is required.")).Render(r.Context(), w)
 		return
 	}
 
@@ -165,19 +165,19 @@ templ educationEdit(value Education, err string) {
 				value={ strconv.Itoa(value.ID) }
 			/>
 		}
-		<label for="company">Company</label>
+		<label for="institution">Institution</label>
 		<input
-			name="company"
-			id="company"
-			value={ value.Company }
+			name="institution"
+			id="institution"
+			value={ value.Institution }
 			required
 		/>
 		<br/>
-		<label for="title">Title</label>
+		<label for="title">Degree</label>
 		<input
 			name="title"
 			id="title"
-			value={ value.Title }
+			value={ value.Degree }
 			required
 		/>
 		<br/>
@@ -208,7 +208,7 @@ templ educationEdit(value Education, err string) {
 			max={ strconv.Itoa(thisYear()) }
 			value={ valueOrEmptyString(int(value.Start.Year)) }
 			required
-		/>t
+		/>
 		<br/>
 		<label>
 			<input
@@ -279,7 +279,7 @@ templ educationList() {
 
 templ educationEditLink(education Education) {
 	<div>
-		<span>{ education.Company } - { education.Title }</span>
+		<span>{ education.Institution } - { education.Degree }</span>
 		<a href={ "/education/" + strconv.Itoa(education.ID) }>[Edit]</a>
 	</div>
 }

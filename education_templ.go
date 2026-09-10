@@ -17,13 +17,13 @@ import (
 )
 
 type Education struct {
-	ID       int       `json:"id"`
-	Company  string    `json:"company"`
-	Location string    `json:"location"`
-	Title    string    `json:"title"`
-	Start    MonthDate `json:"start"`
-	End      MonthDate `json:"end,omitzero"`
-	Current  bool      `json:"current"`
+	ID          int       `json:"id"`
+	Institution string    `json:"institution"`
+	Location    string    `json:"location"`
+	Degree      string    `json:"title"`
+	Start       MonthDate `json:"start"`
+	End         MonthDate `json:"end,omitzero"`
+	Current     bool      `json:"current"`
 }
 
 var educations []Education
@@ -57,10 +57,10 @@ func handleRequestUpdateEducation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	next := Education{
-		Company:  strings.TrimSpace(r.FormValue("company")),
-		Location: strings.TrimSpace(r.FormValue("location")),
-		Title:    strings.TrimSpace(r.FormValue("title")),
-		Current:  r.FormValue("current") != "",
+		Institution: strings.TrimSpace(r.FormValue("institution")),
+		Location:    strings.TrimSpace(r.FormValue("location")),
+		Degree:      strings.TrimSpace(r.FormValue("title")),
+		Current:     r.FormValue("current") != "",
 	}
 
 	// ID can be empty, we would need to deal with empty IDs (new entries)
@@ -75,18 +75,18 @@ func handleRequestUpdateEducation(w http.ResponseWriter, r *http.Request) {
 		next.ID = ID
 	}
 
-	// Company needs to be filled. Even if the browser checks, we check again
+	// Institution needs to be filled. Even if the browser checks, we check again
 
-	if next.Company == "" {
+	if next.Institution == "" {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		page("Edit Education", educationEdit(next, "Company is required.")).Render(r.Context(), w)
+		page("Edit Education", educationEdit(next, "Institution is required.")).Render(r.Context(), w)
 		return
 	}
 
-	// Title. Required. We double check it, too
-	if next.Title == "" {
+	// Degree. Required. We double check it, too
+	if next.Degree == "" {
 		w.WriteHeader(http.StatusUnprocessableEntity)
-		page("Edit Education", educationEdit(next, "Title is required.")).Render(r.Context(), w)
+		page("Edit Education", educationEdit(next, "Degree is required.")).Render(r.Context(), w)
 		return
 	}
 
@@ -207,27 +207,27 @@ func educationEdit(value Education, err string) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<label for=\"company\">Company</label> <input name=\"company\" id=\"company\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<label for=\"institution\">Institution</label> <input name=\"institution\" id=\"institution\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 string
-		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(value.Company)
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue(value.Institution)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 172, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 172, Col: 28}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" required><br><label for=\"title\">Title</label> <input name=\"title\" id=\"title\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" required><br><label for=\"title\">Degree</label> <input name=\"title\" id=\"title\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(value.Title)
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(value.Degree)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 180, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 180, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 		if templ_7745c5c3_Err != nil {
@@ -298,7 +298,7 @@ func educationEdit(value Education, err string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" required>t<br><label><input type=\"checkbox\" name=\"current\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" required><br><label><input type=\"checkbox\" name=\"current\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -497,9 +497,9 @@ func educationEditLink(education Education) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(education.Company)
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(education.Institution)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 282, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 282, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -510,9 +510,9 @@ func educationEditLink(education Education) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var19 string
-		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(education.Title)
+		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(education.Degree)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 282, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `education.templ`, Line: 282, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
