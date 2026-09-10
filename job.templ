@@ -88,26 +88,13 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	next := Job{
-		ID:       -1,
 		Company:  strings.TrimSpace(r.FormValue("company")),
-		Title:    strings.TrimSpace(r.FormValue("title")),
 		Location: strings.TrimSpace(r.FormValue("location")),
-
-		Current: r.FormValue("current") != "",
+		Title:    strings.TrimSpace(r.FormValue("title")),
+		Current:  r.FormValue("current") != "",
 	}
 
-	start, err := parseMonthDate(
-		r.FormValue("startMonth"),
-		r.FormValue("startYear"),
-	)
-	if err != nil {
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		page("Edit Job", jobEdit(next, err.Error())).Render(r.Context(), w)
-		return
-	}
-
-	next.Start = start
-
+	// ID can be empty, we would need to deal with empty IDs (new entries)
 	id := r.FormValue("id")
 	if id != "" {
 		ID, err := strconv.Atoi(id)
@@ -119,8 +106,51 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 		next.ID = ID
 	}
 
-	endYear := r.FormValue("endYear")
-	current := r.FormValue("current")
+	// Company needs to be filled. Even if the browser checks, we check again
+
+	if next.Company == "" {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		page("Edit Job", jobEdit(next, "Company is required.")).Render(r.Context(), w)
+		return
+	}
+
+	// Title. Required. We double check it, too
+	if next.Title == "" {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		page("Edit Job", jobEdit(next, "Title is required.")).Render(r.Context(), w)
+		return
+	}
+
+	// Start Date as Month/Year. We validate it.
+	start, err := parseMonthDate(
+		r.FormValue("startMonth"),
+		r.FormValue("startYear"),
+	)
+	if err != nil {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		page("Edit Job", jobEdit(next, err.Error())).Render(r.Context(), w)
+		return
+	}
+	next.Start = start
+
+	if !next.Current {
+		end, err := parseMonthDate(
+			r.FormValue("endMonth"),
+			r.FormValue("endYear"),
+		)
+		if err != nil {
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			page("Edit Job", jobEdit(next, err.Error())).Render(r.Context(), w)
+			return
+		}
+
+		if end.Before(next.Start) {
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			page("Edit Job", jobEdit(next, "Check your dates")).Render(r.Context(), w)
+			return
+		}
+		next.End = end
+	}
 
 	data, err := json.Marshal(next)
 	if err != nil {
@@ -142,15 +172,52 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 templ jobEdit(value Job, err string) {
 	<h1>Change job?</h1>
 	<form action="/job" method="post">
-	 
-		<label for="url">Profile URL</label>
+		<label for="company">Company</label>
 		<input
-			name="url"
-			id="url"
-			type="url"
+			name="company"
+			id="company"
 			value={ value.Company }
 			required
 		/>
+		<label for="title">Title</label>
+		<input
+			name="title"
+			id="title"
+			value={ value.Title }
+			required
+		/>
+		<label for="location">Location</label>
+		<input
+			name="location"
+			id="location"
+			value={ value.Location }
+		/>
+		<label for="startMonth">Start month</label>
+		<input
+			name="startMonth"
+			id="startMonth"
+			type="number"
+			min="1"
+			max="12"
+			required
+		/>
+		<label for="startYear">Start year</label>
+		<input
+			name="startYear"
+			id="startYear"
+			type="number"
+			min="1900"
+			max="2100"
+			required
+		/>
+		<label>
+			<input
+				type="checkbox"
+				name="current"
+				checked?={ value.Current }
+			/>
+			Current job
+		</label>
 		<button type="submit">Update</button>
 	</form>
 	if err != "" {
