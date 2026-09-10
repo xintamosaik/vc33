@@ -1,6 +1,12 @@
 package main
 
-import "net/http"
+import (
+	"encoding/json"
+	"log"
+	"net/http"
+	"strconv"
+	"strings"
+)
 
 type CVJob struct {
 	JobID   int      `json:"jobId"`
@@ -28,22 +34,203 @@ type CV struct {
 	Skills []CVSkillCategory `json:"skills"`
 }
 
-templ cv() {
+func nextCVID() int {
+	maxID := 0
+
+	for _, cv := range cvs {
+		if cv.ID > maxID {
+			maxID = cv.ID
+		}
+	}
+
+	return maxID + 1
+}
+
+func findCV(id int) (CV, bool) {
+	for _, cv := range cvs {
+		if cv.ID == id {
+			return cv, true
+		}
+	}
+
+	return CV{}, false
+}
+
+func handleRequestUpdateCV(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		page("Edit CV", cvEdit(CV{}, "Could not read the form.")).Render(r.Context(), w)
+		return
+	}
+
+	next := CV{
+		Name:    strings.TrimSpace(r.FormValue("name")),
+		Summary: strings.TrimSpace(r.FormValue("summary")),
+	}
+
+	// ID can be empty, we would need to deal with empty IDs (new entries)
+	id := r.FormValue("id")
+	if id != "" {
+		ID, err := strconv.Atoi(id)
+		if err != nil {
+			w.WriteHeader(http.StatusUnprocessableEntity)
+			page("Edit CV", cvEdit(next, "Invalid cv ID.")).Render(r.Context(), w)
+			return
+		}
+		next.ID = ID
+	}
+
+	if next.Name == "" {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		page("Edit CV", cvEdit(next, "Name is required.")).Render(r.Context(), w)
+		return
+	}
+
+	if next.Summary == "" {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		page("Edit CV", cvEdit(next, "Summary is required.")).Render(r.Context(), w)
+		return
+	}
+
+	nextCVs := append([]CV(nil), cvs...)
+
+	if next.ID == 0 {
+		next.ID = nextCVID()
+		nextCVs = append(nextCVs, next)
+	} else {
+		found := false
+
+		for i := range nextCVs {
+			if nextCVs[i].ID == next.ID {
+				nextCVs[i] = next
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			w.WriteHeader(http.StatusNotFound)
+			page("Edit CV", cvEdit(next, "CV not found.")).Render(r.Context(), w)
+			return
+		}
+	}
+
+	data, err := json.Marshal(nextCVs)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Edit CV", cvEdit(next, "Could not encode the data.")).Render(r.Context(), w)
+		return
+	}
+
+	err = writeString("cvs.json", string(data))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Edit CV", cvEdit(next, "Could not save the cvs.")).Render(r.Context(), w)
+		return
+	}
+
+	cvs = nextCVs
+
+	http.Redirect(w, r, "/cv/"+strconv.Itoa(next.ID), http.StatusSeeOther)
+}
+
+templ cvName(name string) {
+	<label for="name">Name</label>
+	<input
+		name="name"
+		id="name"
+		value={ name }
+		required
+	/>
+}
+
+templ cvSummary(summary string) {
+	<label for="summary">Summary</label>
+	<input
+		name="summary"
+		id="summary"
+		value={ summary }
+		required
+	/>
+}
+
+templ cvNav() {
 	<nav>
 		<a href="/cvs">Back</a>
 		<a href="/">Home</a>
 	</nav>
-	<main>
-		<h1>
-			<span>CV</span>
-		</h1>
-	</main>
 }
 
-func handleCV(w http.ResponseWriter, r *http.Request) {
-	page("CV", cv()).Render(r.Context(), w)
+templ cvBack() {
+	<a href="/cvs">Cancel</a>
+}
+
+templ cvAdd(value CV, err string) {
+	@cvNav()
+	<h1>Add CV?</h1>
+	<form action="/cv" method="post">
+		@cvName(value.Name)
+		<br/>
+		@cvSummary(value.Summary)
+		<br/>
+		<button type="submit">Update</button>
+	</form>
+	if err != "" {
+		<p role="alert">{ err }</p>
+	}
+	@cvBack()
+}
+
+templ cvEdit(value CV, err string) {
+	@cvNav()
+	<h1>Change CV?</h1>
+	<form action="/cv" method="post">
+		<input
+			type="hidden"
+			name="id"
+			value={ strconv.Itoa(value.ID) }
+		/>
+		@cvName(value.Name)
+		<br/>
+		@cvSummary(value.Summary)
+		<br/>
+		<button type="submit">Update</button>
+	</form>
+	if err != "" {
+		<p role="alert">{ err }</p>
+	}
+	@cvBack()
+}
+
+func handleCVEdit(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	cv, found := findCV(id)
+	if !found {
+		http.NotFound(w, r)
+		return
+	}
+
+	page("Edit CV", cvEdit(cv, "")).Render(r.Context(), w)
+}
+
+func handleCVAdd(w http.ResponseWriter, r *http.Request) {
+	page("Add CV", cvAdd(CV{}, "")).Render(r.Context(), w)
 }
 
 func init() {
-	http.HandleFunc("GET /cv", handleCV)
+	saved, err := readString("cvs.json")
+	if err == nil {
+		if err := json.Unmarshal([]byte(saved), &cvs); err != nil {
+			log.Println("There were errors reading cvs data.")
+		}
+	}
+
+	http.HandleFunc("GET /cv", handleCVAdd)
+	http.HandleFunc("GET /cv/{id}", handleCVEdit)
+	http.HandleFunc("POST /cv", handleRequestUpdateCV)
 }

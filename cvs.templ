@@ -1,21 +1,46 @@
 package main
 
-import "net/http"
+import (
+	"net/http"
+	"strconv"
+)
 
-templ cvs() {
+var cvs []CV
+
+templ cvEditLink(cv CV) {
+	<div>
+		<span>{ cv.Name }</span>
+		<a href={ "/cv/" + strconv.Itoa(cv.ID) }>[Edit]</a>
+	</div>
+}
+
+templ cvList() {
+	for _, cv := range cvs {
+		@cvEditLink(cv)
+	}
+}
+
+func handleCVS(w http.ResponseWriter, r *http.Request) {
+	page("CVS", CVS()).Render(r.Context(), w)
+}
+
+templ CVAddLink() {
+	<a href="/cv">[Add]</a>
+}
+
+templ CVS() {
 	<nav>
 		<a href="/">Profile</a>
 	</nav>
 	<main>
 		<h1>
 			<span>CVS</span>
-			<a href="/cv">[Add]</a>
+			 
+			@CVAddLink()
+			 
 		</h1>
+		@cvList()
 	</main>
-}
-
-func handleCVS(w http.ResponseWriter, r *http.Request) {
-	page("CVS", cvs()).Render(r.Context(), w)
 }
 
 func init() {
