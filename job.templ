@@ -338,6 +338,7 @@ func handleJobEdit(w http.ResponseWriter, r *http.Request) {
 
 	page("Edit Job", jobEdit(job, "")).Render(r.Context(), w)
 }
+
 func handleJobAdd(w http.ResponseWriter, r *http.Request) {
 	page("Add Job", jobEdit(Job{}, "")).Render(r.Context(), w)
 }
@@ -353,7 +354,7 @@ templ jobList() {
 
 templ jobEditLink(job Job) {
 	<div>
-		<span>Job: { job.Company } - { job.Title }</span>
+		<span>{ job.Company } - { job.Title }</span>
 		<a href={ "/job/" + strconv.Itoa(job.ID) }>[Edit]</a>
 	</div>
 }
