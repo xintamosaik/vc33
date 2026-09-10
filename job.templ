@@ -29,6 +29,11 @@ type MonthDate struct {
 	Month Month `json:"month"`
 	Year  Year  `json:"year"`
 }
+const maxCareerHistoryYears = 40
+
+func earliestJobYear() int {
+	return thisYear() - maxCareerHistoryYears
+}
 
 func (d MonthDate) Before(other MonthDate) bool {
 	if d.Year != other.Year {
@@ -57,7 +62,7 @@ func parseYear(value string) (Year, error) {
 		return 0, errors.New("year must be a number")
 	}
 
-	if n < 1900 || n > thisYear() {
+	if n < earliestJobYear() || n > thisYear() {
 		return 0, errors.New("invalid year")
 	}
 
@@ -227,7 +232,7 @@ templ jobEdit(value Job, err string) {
 			name="startYear"
 			id="startYear"
 			type="number"
-			min="1900"
+			min={ strconv.Itoa(earliestJobYear()) }
 			max={ strconv.Itoa(thisYear()) }
 			value={ valueOrEmptyString(int(value.Start.Year)) }
 			required
@@ -257,7 +262,7 @@ templ jobEdit(value Job, err string) {
 			name="endYear"
 			id="endYear"
 			type="number"
-			min="1900"
+			min={ strconv.Itoa(earliestJobYear()) }
 			max={ strconv.Itoa(thisYear()) }
 			value={ valueOrEmptyString(int(value.End.Year)) }
 		/>
