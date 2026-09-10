@@ -1,0 +1,24 @@
+package main
+
+import "net/http"
+
+templ cvs() {
+	<nav>
+		<a href="/">Profile</a>
+	</nav>
+	<main>
+		<h1>
+			<span>CVS</span>
+			<a href="/cv">[Add]</a>
+		</h1>
+		
+	</main>
+}
+
+func handleCVS(w http.ResponseWriter, r *http.Request) {
+	page("CVS", cvs()).Render(r.Context(), w)
+}
+
+func init() {
+	http.HandleFunc("GET /cvs", handleCVS)
+}
