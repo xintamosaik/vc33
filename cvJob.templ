@@ -85,7 +85,7 @@ templ cvJobAdd(id int, job Job) {
 	<p>
 		<span>{ job.Company } - { job.Title }</span> | <span>{ job.Location }</span>
 	</p>
-	<form>
+	<form action={ "/cv/" + strconv.Itoa(id) + "/job/" + strconv.Itoa(job.ID)} method="POST">
 		<label>summary</label>
 		<br/>
 		<textarea>..</textarea>
