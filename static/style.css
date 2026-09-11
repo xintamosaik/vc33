@@ -1,9 +1,26 @@
-@view-transition {
-    navigation: auto;
+@view-transition { navigation: auto; }
+ 
+body {
+    border: 1ch solid linktext;
+    font-family: monospace;
+    width: min(75ch, 70%); 
+    margin: 2rem auto;
+    padding: 2rem;
 }
 
-body {
-    font-family: monospace;
-    width: 75ch; 
-    margin: 0 auto;
+label { cursor: pointer; }
+
+button {
+    background-color: linktext;
+    border: solid linktext;    
+    cursor:pointer;  
+}
+
+button:hover { border: solid canvastext; }
+
+a { text-decoration: none; }
+
+a:hover {
+    color: canvastext;
+    text-decoration: underline;
 }
