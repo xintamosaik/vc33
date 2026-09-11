@@ -55,6 +55,7 @@ func findCV(id int) (CV, bool) {
 
 	return CV{}, false
 }
+
 func handleRequestAddCV(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -99,13 +100,9 @@ func handleRequestAddCV(w http.ResponseWriter, r *http.Request) {
 
 	cvs = nextCVs
 
-	http.Redirect(
-		w,
-		r,
-		"/cv/"+strconv.Itoa(next.ID),
-		http.StatusSeeOther,
-	)
+	http.Redirect(w, r, "/cv/"+strconv.Itoa(next.ID), http.StatusSeeOther )
 }
+
 func handleRequestUpdateCV(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
