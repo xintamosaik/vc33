@@ -76,24 +76,22 @@ func handleCVJobUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 templ cvJobAdd(id int, job Job) {
-    <nav>
-        <a href={"/cv/"+strconv.Itoa(id) }>Back</a>
-        <a href="/cvs">CVS</a>
-        <a href="/">Profile</a>
-    </nav>
+	<nav>
+		<a href={ "/cv/" + strconv.Itoa(id) }>Back</a>
+		<a href="/cvs">CVS</a>
+		<a href="/">Profile</a>
+	</nav>
 	<h1>Add Job Details for CV { id } / Job { job.ID }</h1>
-    <p> 
-    <span>{ job.Company } - { job.Title }</span> | <span>{ job.Location }</span>
-    </p>
-   
-    <form>
-    <label>summary</label>
-    <br />
-    <textarea>..</textarea>
-    <br />
-    <button type="submit">Add</button>
-    </form>
-
+	<p>
+		<span>{ job.Company } - { job.Title }</span> | <span>{ job.Location }</span>
+	</p>
+	<form>
+		<label>summary</label>
+		<br/>
+		<textarea>..</textarea>
+		<br/>
+		<button type="submit">Add</button>
+	</form>
 }
 
 templ cvJobEdit() {
