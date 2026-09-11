@@ -5,8 +5,6 @@ import (
 	"strconv"
 )
 
-var cvJob CVJob
-
 func handleCVJobAdd(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
@@ -32,7 +30,7 @@ func handleCVJobAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	page("Edit Job", cvJobAdd(cv.ID, job.ID)).Render(r.Context(), w)
+	page("Edit Job", cvJobAdd(cv.ID, job)).Render(r.Context(), w)
 }
 func handleCVJobEdit(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
@@ -59,7 +57,7 @@ func handleCVJobEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	page("Edit Job", cvJobAdd(cv.ID, job.ID)).Render(r.Context(), w)
+	page("Edit Job", cvJobAdd(cv.ID, job)).Render(r.Context(), w)
 }
 
 func handleCVJobUpdate(w http.ResponseWriter, r *http.Request) {
@@ -77,8 +75,8 @@ func handleCVJobUpdate(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/cv/"+strconv.Itoa(cv.ID), http.StatusSeeOther)
 }
 
-templ cvJobAdd(id, jobId int) {
-	<h1>Add { id }/{ jobId }</h1>
+templ cvJobAdd(id int, job Job) {
+	<h1>Add { id }/{ job.ID }</h1>
 }
 
 templ cvJobEdit() {
