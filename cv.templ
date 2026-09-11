@@ -219,12 +219,7 @@ templ cvAdd(value CV, err string) {
 templ cvJobRow(cv CV, job Job) {
 	<div>
 		<span>{ job.Company } - { job.Title }</span>
-		<a
-			href={ "/cv/" +
-			strconv.Itoa(cv.ID) +
-			"/job/" +
-			strconv.Itoa(job.ID) }
-		>
+		<a href={ "/cv/" + strconv.Itoa(cv.ID) + "/job/" + strconv.Itoa(job.ID) }>
 			[Edit]
 		</a>
 	</div>
@@ -239,12 +234,7 @@ templ cvJobList(cv CV) {
 templ cvEducationRow(cv CV, education Education) {
 	<div>
 		<span>{ education.Degree } - { education.Institution }</span>
-		<a
-			href={ "/cv/" +
-			strconv.Itoa(cv.ID) +
-			"/education/" +
-			strconv.Itoa(education.ID) }
-		>
+		<a href={ "/cv/" + strconv.Itoa(cv.ID) + "/education/" + strconv.Itoa(education.ID) }>
 			[Edit]
 		</a>
 	</div>
@@ -259,12 +249,7 @@ templ cvEducationList(cv CV) {
 templ cvSkillsRow(cv CV, skillCategory SkillCategory) {
 	<div>
 		<span>{ skillCategory.Name }</span>
-		<a
-			href={ "/cv/" +
-			strconv.Itoa(cv.ID) +
-			"/skills/" +
-			strconv.Itoa(skillCategory.ID) }
-		>
+		<a href={ "/cv/" + strconv.Itoa(cv.ID) +"/skills/" + strconv.Itoa(skillCategory.ID) }>
 			[Edit]
 		</a>
 	</div>
