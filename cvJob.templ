@@ -42,9 +42,7 @@ func handleCVJobEdit(w http.ResponseWriter, r *http.Request) {
 	}
 	cvJob, found := findCVJob(cv, jobId)
 	if !found {
-		cvJob = CVJob{
-			JobID: jobId,
-		}
+		cvJob = CVJob{JobID: jobId}
 	}
 
 	page("Edit Job", cvJobEdit(cv, job, cvJob, "")).Render(r.Context(), w)
@@ -103,9 +101,6 @@ func handleCVJobUpdate(w http.ResponseWriter, r *http.Request) {
 		next.Jobs = append(next.Jobs, nextCVJob)
 	}
 
-	// next is now the updated ONE CV.
-
-	// Now make candidate state for ALL CVs.
 	nextCVs := append([]CV(nil), cvs...)
 
 	for i := range nextCVs {
@@ -130,7 +125,7 @@ func handleCVJobUpdate(w http.ResponseWriter, r *http.Request) {
 
 	cvs = nextCVs
 
-	http.Redirect(w, r,	"/cv/"+strconv.Itoa(id),http. StatusSeeOther)
+	http.Redirect(w, r, "/cv/"+strconv.Itoa(id), http.StatusSeeOther)
 }
 
 templ cvJobEdit(cv CV, job Job, value CVJob, err string) {
@@ -140,19 +135,10 @@ templ cvJobEdit(cv CV, job Job, value CVJob, err string) {
 		<a href="/">Profile</a>
 	</nav>
 	<h1>{ job.Company } - { job.Title }</h1>
-	<form
-		action={ "/cv/" +
-			strconv.Itoa(cv.ID) +
-			"/job/" +
-			strconv.Itoa(job.ID) }
-		method="post"
-	>
+	<form action={ "/cv/" + strconv.Itoa(cv.ID) + "/job/" + strconv.Itoa(job.ID) } method="post">
 		<label for="bullets">Bullets</label>
 		<br/>
-		<textarea
-			name="bullets"
-			id="bullets"
-		>{ strings.Join(value.Bullets, "\n") }</textarea>
+		<textarea name="bullets" id="bullets">{ strings.Join(value.Bullets, "\n") }</textarea>
 		<br/>
 		<button type="submit">Save</button>
 	</form>
