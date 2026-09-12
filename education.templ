@@ -16,6 +16,7 @@ type Education struct {
 	Start       MonthDate `json:"start"`
 	End         MonthDate `json:"end,omitzero"`
 	Current     bool      `json:"current"`
+	Bullets	    []string  `json:"bullets,omitempty"`
 }
 
 var educations []Education
@@ -112,6 +113,8 @@ func handleRequestUpdateEducation(w http.ResponseWriter, r *http.Request) {
 		}
 		next.End = end
 	}
+
+	next.Bullets = parseLines(r.FormValue("bullets"))
 
 	nextEducations := append([]Education(nil), educations...)
 
@@ -239,6 +242,11 @@ templ educationEdit(value Education, err string) {
 			value={ valueOrEmptyString(int(value.End.Year)) }
 		/>
 		<br/>
+		<label for="bullets">Bullets</label>
+		<br/>
+		<textarea name="bullets" id="bullets" rows="25">{ strings.Join(value.Bullets, "\n") }</textarea>
+		<br/>
+		
 		<button type="submit">Update</button>
 	</form>
 	if err != "" {
