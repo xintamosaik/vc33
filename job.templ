@@ -17,6 +17,7 @@ type Job struct {
 	Start    MonthDate `json:"start"`
 	End      MonthDate `json:"end,omitzero"`
 	Current  bool      `json:"current"`
+	Bullets  []string  `json:"bullets,omitempty"`
 }
 
 var jobs []Job
@@ -114,6 +115,7 @@ func handleRequestUpdateJob(w http.ResponseWriter, r *http.Request) {
 		next.End = end
 	}
 
+	next.Bullets = parseLines(r.FormValue("bullets"))
 	nextJobs := append([]Job(nil), jobs...)
 
 	if next.ID == 0 {
@@ -239,6 +241,10 @@ templ jobEdit(value Job, err string) {
 			max={ strconv.Itoa(thisYear()) }
 			value={ valueOrEmptyString(int(value.End.Year)) }
 		/>
+		<br/>
+		<label for="bullets">Bullets</label>
+		<br/>
+		<textarea name="bullets" id="bullets" rows="25">{ strings.Join(value.Bullets, "\n") }</textarea>
 		<br/>
 		<button type="submit">Update</button>
 	</form>
