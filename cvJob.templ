@@ -138,7 +138,7 @@ templ cvJobEdit(cv CV, job Job, value CVJob, err string) {
 	<form action={ "/cv/" + strconv.Itoa(cv.ID) + "/job/" + strconv.Itoa(job.ID) } method="post">
 		<label for="bullets">Bullets</label>
 		<br/>
-		<textarea name="bullets" id="bullets" cols="70" rows="20">{ strings.Join(value.Bullets, "\n") }</textarea>
+		<textarea name="bullets" id="bullets" rows="25">{ strings.Join(value.Bullets, "\n") }</textarea>
 		<br/>
 		<button type="submit">Save</button>
 	</form>

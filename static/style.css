@@ -24,3 +24,10 @@ a:hover {
     color: canvastext;
     text-decoration: underline;
 }
+
+textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
+}
