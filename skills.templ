@@ -14,24 +14,6 @@ type SkillCategory struct {
 	Skills []string `json:"skills"`
 }
 
-func parseSkills(value string) []string {
-	var skills []string
-	seen := map[string]bool{}
-
-	for _, line := range strings.Split(value, "\n") {
-		skill := strings.TrimSpace(line)
-
-		if skill == "" || seen[skill] {
-			continue
-		}
-
-		seen[skill] = true
-		skills = append(skills, skill)
-	}
-
-	return skills
-}
-
 var skillCategories []SkillCategory
 
  
@@ -65,7 +47,7 @@ func handleRequestUpdateSkillCategory(w http.ResponseWriter, r *http.Request) {
 
 	next := SkillCategory{
 		Name: strings.TrimSpace(r.FormValue("name")),
-		Skills: parseSkills(strings.TrimSpace(r.FormValue("skills"))),
+		Skills: parseLines(strings.TrimSpace(r.FormValue("skills"))),
 	 
 	}
 
@@ -82,7 +64,6 @@ func handleRequestUpdateSkillCategory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Name needs to be filled. Even if the browser checks, we check again
-
 	if next.Name == "" {
 		w.WriteHeader(http.StatusUnprocessableEntity)
 		page("Edit SkillCategory", skillCategoryEdit(next, "Name is required.")).Render(r.Context(), w)
