@@ -1,0 +1,153 @@
+package main
+
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+	"strings"
+)
+
+func findCVEducation(cv CV, educationID int) (CVEducation, bool) {
+	for _, cvEducation := range cv.Educations {
+		if cvEducation.EducationID == educationID {
+			return cvEducation, true
+		}
+	}
+
+	return CVEducation{}, false
+}
+func handleCVEducationEdit(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	cv, found := findCV(id)
+	if !found {
+		http.NotFound(w, r)
+		return
+	}
+
+	educationId, err := strconv.Atoi(r.PathValue("educationId"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	education, found := findEducation(educationId)
+	if !found {
+		http.NotFound(w, r)
+		return
+	}
+	cvEducation, found := findCVEducation(cv, educationId)
+	if !found {
+		cvEducation = CVEducation{EducationID: educationId}
+	}
+
+	page("Edit Education", cvEducationEdit(cv, education, cvEducation, "")).Render(r.Context(), w)
+}
+
+func handleCVEducationUpdate(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	cv, found := findCV(id)
+	if !found {
+		http.NotFound(w, r)
+		return
+	}
+
+	educationID, err := strconv.Atoi(r.PathValue("educationId"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	education, found := findEducation(educationID)
+	if !found {
+		http.NotFound(w, r)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		page("Edit Education", cvEducationEdit(cv, education, CVEducation{EducationID: educationID}, "Could not read the form.")).Render(r.Context(), w)
+		return
+	}
+
+	nextCVEducation := CVEducation{
+		EducationID:   educationID,
+		Bullets: parseLines(r.FormValue("bullets")),
+	}
+
+	next := cv
+	next.Educations = append([]CVEducation(nil), cv.Educations...)
+
+	found = false
+
+	for i := range next.Educations {
+		if next.Educations[i].EducationID == educationID {
+			next.Educations[i] = nextCVEducation
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		next.Educations = append(next.Educations, nextCVEducation)
+	}
+
+	nextCVs := append([]CV(nil), cvs...)
+
+	for i := range nextCVs {
+		if nextCVs[i].ID == id {
+			nextCVs[i] = next
+			break
+		}
+	}
+
+	data, err := json.Marshal(nextCVs)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Edit Education", cvEducationEdit(cv, education, nextCVEducation, "Could not encode the CV Education.")).Render(r.Context(), w)
+		return
+	}
+
+	if err := writeString("cvs.json", string(data)); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Edit Education", cvEducationEdit(cv, education, nextCVEducation, "Could not save the CV Education.")).Render(r.Context(), w)
+		return
+	}
+
+	cvs = nextCVs
+
+	http.Redirect(w, r, "/cv/"+strconv.Itoa(id), http.StatusSeeOther)
+}
+
+templ cvEducationEdit(cv CV, education Education, value CVEducation, err string) {
+	<nav>
+		<a href={ "/cv/" + strconv.Itoa(cv.ID) }>Back</a>
+		<a href="/cvs">CVS</a>
+		<a href="/">Profile</a>
+	</nav>
+	<h1>{ education.Degree } - { education.Institution }</h1>
+	<form action={ "/cv/" + strconv.Itoa(cv.ID) + "/education/" + strconv.Itoa(education.ID) } method="post">
+		<label for="bullets">Bullets</label>
+		<br/>
+		<textarea name="bullets" id="bullets" rows="25">{ strings.Join(value.Bullets, "\n") }</textarea>
+		<br/>
+		<button type="submit">Save</button>
+	</form>
+	if err != "" {
+		<p role="alert">{ err }</p>
+	}
+}
+
+func init() {
+	http.HandleFunc("GET /cv/{id}/education/{educationId}", handleCVEducationEdit)
+	http.HandleFunc("POST /cv/{id}/education/{educationId}", handleCVEducationUpdate)
+}
