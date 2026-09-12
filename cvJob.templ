@@ -1,36 +1,20 @@
 package main
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
-func handleCVJobAdd(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil {
-		http.NotFound(w, r)
-		return
+func findCVJob(cv CV, jobID int) (CVJob, bool) {
+	for _, cvJob := range cv.Jobs {
+		if cvJob.JobID == jobID {
+			return cvJob, true
+		}
 	}
 
-	cv, found := findCV(id)
-	if !found {
-		http.NotFound(w, r)
-		return
-	}
-
-	jobId, err := strconv.Atoi(r.PathValue("jobId"))
-	if err != nil {
-		http.NotFound(w, r)
-		return
-	}
-
-	job, found := findJob(jobId)
-	if !found {
-		http.NotFound(w, r)
-		return
-	}
-
-	page("Edit Job", cvJobAdd(cv.ID, job)).Render(r.Context(), w)
+	return CVJob{}, false
 }
 func handleCVJobEdit(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
@@ -56,8 +40,14 @@ func handleCVJobEdit(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	cvJob, found := findCVJob(cv, jobId)
+	if !found {
+		cvJob = CVJob{
+			JobID: jobId,
+		}
+	}
 
-	page("Edit Job", cvJobAdd(cv.ID, job)).Render(r.Context(), w)
+	page("Edit Job", cvJobEdit(cv, job, cvJob, "")).Render(r.Context(), w)
 }
 
 func handleCVJobUpdate(w http.ResponseWriter, r *http.Request) {
@@ -72,34 +62,106 @@ func handleCVJobUpdate(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	http.Redirect(w, r, "/cv/"+strconv.Itoa(cv.ID), http.StatusSeeOther)
+
+	jobID, err := strconv.Atoi(r.PathValue("jobId"))
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	job, found := findJob(jobID)
+	if !found {
+		http.NotFound(w, r)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		page("Edit Job", cvJobEdit(cv, job, CVJob{JobID: jobID}, "Could not read the form.")).Render(r.Context(), w)
+		return
+	}
+
+	nextCVJob := CVJob{
+		JobID:   jobID,
+		Bullets: parseLines(r.FormValue("bullets")),
+	}
+
+	next := cv
+	next.Jobs = append([]CVJob(nil), cv.Jobs...)
+
+	found = false
+
+	for i := range next.Jobs {
+		if next.Jobs[i].JobID == jobID {
+			next.Jobs[i] = nextCVJob
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		next.Jobs = append(next.Jobs, nextCVJob)
+	}
+
+	// next is now the updated ONE CV.
+
+	// Now make candidate state for ALL CVs.
+	nextCVs := append([]CV(nil), cvs...)
+
+	for i := range nextCVs {
+		if nextCVs[i].ID == id {
+			nextCVs[i] = next
+			break
+		}
+	}
+
+	data, err := json.Marshal(nextCVs)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Edit Job", cvJobEdit(cv, job, nextCVJob, "Could not encode the CV Job.")).Render(r.Context(), w)
+		return
+	}
+
+	if err := writeString("cvs.json", string(data)); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		page("Edit Job", cvJobEdit(cv, job, nextCVJob, "Could not save the CV Job.")).Render(r.Context(), w)
+		return
+	}
+
+	cvs = nextCVs
+
+	http.Redirect(w, r,	"/cv/"+strconv.Itoa(id),http. StatusSeeOther)
 }
 
-templ cvJobAdd(id int, job Job) {
+templ cvJobEdit(cv CV, job Job, value CVJob, err string) {
 	<nav>
-		<a href={ "/cv/" + strconv.Itoa(id) }>Back</a>
+		<a href={ "/cv/" + strconv.Itoa(cv.ID) }>Back</a>
 		<a href="/cvs">CVS</a>
 		<a href="/">Profile</a>
 	</nav>
-	<h1>Add Job Details for CV { id } / Job { job.ID }</h1>
-	<p>
-		<span>{ job.Company } - { job.Title }</span> | <span>{ job.Location }</span>
-	</p>
-	<form action={ "/cv/" + strconv.Itoa(id) + "/job/" + strconv.Itoa(job.ID)} method="POST">
-		<label>summary</label>
+	<h1>{ job.Company } - { job.Title }</h1>
+	<form
+		action={ "/cv/" +
+			strconv.Itoa(cv.ID) +
+			"/job/" +
+			strconv.Itoa(job.ID) }
+		method="post"
+	>
+		<label for="bullets">Bullets</label>
 		<br/>
-		<textarea>..</textarea>
+		<textarea
+			name="bullets"
+			id="bullets"
+		>{ strings.Join(value.Bullets, "\n") }</textarea>
 		<br/>
-		<button type="submit">Add</button>
+		<button type="submit">Save</button>
 	</form>
-}
-
-templ cvJobEdit() {
-	<h1>Add</h1>
+	if err != "" {
+		<p role="alert">{ err }</p>
+	}
 }
 
 func init() {
-	http.HandleFunc("GET /cv/{id}/job", handleCVJobAdd)
 	http.HandleFunc("GET /cv/{id}/job/{jobId}", handleCVJobEdit)
 	http.HandleFunc("POST /cv/{id}/job/{jobId}", handleCVJobUpdate)
 }
