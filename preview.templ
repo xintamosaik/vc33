@@ -1,0 +1,297 @@
+package main
+
+import "net/http"
+
+templ preview() {
+	@navigation()
+
+	<main>
+	  <section id="title">
+      <h1>
+        <span>Ulf Dellbrügge</span>
+        <span class="dash"></span>
+        <span>SOFTWARE ENGINEER (FULL-STACK / TYPESCRIPT)</span>
+      </h1>
+    </section>
+
+    <section id="subtitle">
+      <p>
+        <strong>
+          Full-stack software engineer building reliable TypeScript, frontend,
+          and backend systems
+        </strong>
+      </p>
+    </section>
+
+    <section id="contact" style="display: none;">
+      <p>
+        <span>Relocating to London (Skilled Worker visa route)</span>
+        <span class="dash"></span>
+        <span>Open to sponsorship</span>
+      </p>
+    </section>
+
+    <section id="contact-links">
+      <p>
+        <span>
+          <a href="https://www.linkedin.com/in/ulfdellbruegge/" target="_blank">LinkedIn</a>
+        </span>
+        <span class="dash"></span>
+        <span>
+          <a href="mailto:ulfdellbruegge@gmail.com">ulfdellbruegge@gmail.com</a>
+        </span>
+        <span class="dash"></span>
+        <span>
+          <a href="https://github.com/xintamosaik" target="_blank">github.com/xintamosaik</a>
+        </span>
+      </p>
+    </section>
+
+    <section id="commercial_impact">
+      <h2>Selected Impact</h2>
+      <ul>
+        <li>
+          <strong>Replaced a 5,000+ LOC legacy AdController</strong> with a
+          ~60-line config-driven system, removing reliance on a third-party
+          TMS and enabling version-controlled deployments.
+        </li>
+        <li>
+          <strong>Reduced template-development feedback loops from 3–5 minutes to
+            under 1 second</strong>
+          through a TypeScript/esbuild-based local development environment.
+        </li>
+        <li>
+          <strong>Unified ad positioning across 40+ publisher/client
+            websites</strong>
+          with a compact ~100-line JavaScript module, replacing hundreds of
+          scattered layout scripts and lowering integration and maintenance
+          overhead.
+        </li>
+      </ul>
+    </section>
+
+    <!-- SUMMARY -->
+    <section id="summary">
+      <h2>Summary</h2>
+      <p>
+        Software Engineer experienced in TypeScript, JavaScript, React, Vue,
+        Node.js/Fastify, and containerised services. Strong track record of
+        modernising legacy systems, shortening delivery feedback loops, and
+        shipping maintainable production software across frontend, backend,
+        tooling, and infrastructure. Particularly effective in ambiguous
+        environments where complex systems need to be understood, simplified,
+        and stabilised.
+      </p>
+    </section>
+
+    <!-- EXPERIENCE -->
+    <section id="experience">
+      <h2>Experience</h2>
+
+      <div class="job entry">
+        <h3>
+          <span>Software Engineer</span>
+          <span class="dash"></span>
+          <span>aufinity Group GmbH</span>
+        </h3>
+        <h4>
+          <span>Sep 2025 - Present</span>
+          <span class="dash"></span>
+          <span>Cologne, Germany</span>
+        </h4>
+        <ul>
+          <li>
+            <strong>Co-designed and delivered a major authorization-system
+              migration</strong>
+            from fixed roles to user-group-based, fine-grained permissions,
+            enabling customers to create custom permission profiles or use
+            predefined defaults informed by ~6 years of product experience.
+          </li>
+          <li>
+            <strong>Implemented hierarchical, additive permission
+              inheritance</strong>
+            across groups, organisations and locations, so permissions
+            assigned higher in the organisational tree automatically cascade
+            to applicable downstream resources.
+          </li>
+          <li>
+            <strong>Centralised authentication and authorization logic</strong>
+            so application endpoints only declare their required permissions,
+            while the backend resolves the user's identity, group memberships,
+            inherited permissions and access automatically.
+          </li>
+          <li>
+            <strong>Delivered the change end-to-end with one other engineer</strong>, including backend and frontend UI,
+            unit and I/O/integration
+            tests, production rollout, and privacy/security requirements.
+          </li>
+        </ul>
+      </div>
+
+      <div class="job entry">
+        <h3>
+          <span>Software Engineer</span>
+          <span class="dash"></span>
+          <span>iq digital media marketing gmbh</span>
+        </h3>
+        <h4>
+          <span>Jan 2024 - May 2025</span>
+          <span class="dash"></span>
+          <span>Düsseldorf, Germany</span>
+        </h4>
+        <ul>
+          <li>
+            <p>
+              <strong>Reverse-engineered and replaced a 5,000-line legacy
+                AdController</strong>
+              with a ~60-line config-driven core — restored control over
+              publisher-side ad delivery logic, removed reliance on a
+              third-party TMS, enabled version-controlled deployments, and
+              laid the foundation for CI/CD and TypeScript-based development
+              across core AdTech infrastructure.
+            </p>
+          </li>
+          <li>
+            <p>
+              <strong>Built the SkyMover system</strong> to unify ad
+              positioning logic across 40+ client websites — replaced hundreds
+              of scattered, error-prone layout scripts with a compact
+              JavaScript module, reducing integration complexity and ongoing
+              maintenance overhead across revenue-generating publisher
+              environments.
+            </p>
+          </li>
+          <li>
+            <p>
+              <strong>Architected and delivered a modern ad template
+                builder</strong>
+              using TypeScript and esbuild — replaced a fragile, manual system
+              with import/export support, modular design, and a local test
+              environment. Reduced feedback loop time from 3–5 minutes to
+              under 1 second, enabling rapid iteration and future testing
+              capabilities.
+            </p>
+          </li>
+          <li>
+            <p>
+              <strong>Created internal DX and troubleshooting tools</strong>
+              including a template test harness, QA URL builder, macro
+              validation logic, and support for stakeholder-facing ad setup
+              visibility — reduced context-switching and made template
+              debugging, migration, and onboarding easier for technical and
+              non-technical stakeholders.
+            </p>
+          </li>
+          <li>
+            <p>
+              <strong>Drove engineering quality practices</strong> by
+              introducing TypeScript, ESLint, JSDoc, domain-based folder
+              structures, and fast-feedback workflows. Mentored junior
+              teammates, led pair programming efforts, and helped improve
+              shared quality habits.
+            </p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="job entry">
+        <h3>
+          <span>Full Stack Developer</span>
+          <span class="dash"></span>
+          <span>Qanuk GmbH</span>
+        </h3>
+        <h4>
+          <span>Apr 2021 - Dec 2023</span>
+          <span class="dash"></span>
+          <span>Osnabrück, Germany</span>
+        </h4>
+        <ul>
+          <li>
+            <strong>Rebuilt an 8,000+ line legacy invoicing system</strong>
+            into a modular WordPress plugin using MVC architecture,
+            domain/feature slicing, AJAX-based UX, and modern PHP practices.
+            Achieved full feature parity in ~7 months and added multi-language
+            support, custom tax handling, and import/export workflows.
+          </li>
+          <li>
+            <strong>
+              Designed and implemented a flexible internal reporting system
+            </strong>
+            using PHP and Chart.js, enabling visual filtering across event
+            types, cities, and date ranges through an extensible, data-driven
+            architecture with lazy AJAX rendering.
+          </li>
+          <li>
+            <strong>
+              Improved reliability across legacy PHP/JavaScript workflows
+            </strong>
+            by fixing 50–70 recurring PHP bugs, cleaning up thousands of
+            warnings, introducing traceable logging, and refactoring scattered
+            code into modular components with clearer boundaries.
+          </li>
+          <li>
+            <strong>Raised engineering quality and team capability</strong>
+            through pair programming, informal review practices, improved
+            naming and structure, JS/PHP linting, JSDoc, static PHP analysis,
+            and early Docker adoption.
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- SKILLS -->
+    <section id="skills">
+      <h2>Skills</h2>
+      <ul>
+        <li>
+          <strong>Core Stack:</strong> TypeScript, JavaScript (ES6+), React,
+          Vue, Node.js (Fastify), PHP
+        </li>
+        <li>
+          <strong>Infrastructure &amp; DevOps:</strong> Docker, Kubernetes,
+          GitHub Actions, GitLab CI, AWS, GCP, CI/CD
+        </li>
+        <li>
+          <strong>Data &amp; Storage:</strong> MongoDB, Redis, SQL
+          (MySQL/PostgreSQL)
+        </li>
+        <li>
+          <strong>Tooling &amp; Quality:</strong> ESLint, JSDoc,
+          unit/integration testing, TDD/BDD, debugging, documentation, pair
+          programming
+        </li>
+        <li><strong>Languages:</strong> German (native), English (C1)</li>
+      </ul>
+    </section>
+
+    <!-- EDUCATION -->
+    <section id="education">
+      <h2>Education</h2>
+      <div class="education entry">
+        <h3>
+          <span>Master of Arts in Sociology</span>
+          <span class="dash"></span>
+          <span>Universität Bielefeld</span>
+        </h3>
+        <h4>
+          <span>September 2021</span>
+          <span class="dash"></span>
+          <span>Bielefeld, Germany</span>
+        </h4>
+        <p>
+          Specialization: Qualitative Studies and Workplace
+          Studies/Ethnomethodology
+        </p>
+      </div>
+    </section>
+  
+	</main>
+}
+
+func handlePreview(w http.ResponseWriter, r *http.Request) {
+	previewPage("Preview", preview()).Render(r.Context(), w)
+}
+
+func init() {
+	http.HandleFunc("GET /preview", handlePreview)
+}
